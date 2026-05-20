@@ -342,7 +342,9 @@
     clearStage();
 
     addImg('blur black.png', 'gs-blur');
-    addDiv('gs-spotlight');
+    /* Decorative spotlight halo behind the hero shape — exact Figma
+       asset + position. */
+    addImg('glow.png', 'gs-spotlight');
     addImg('ChatGPT Image Dec 26, 2025, 01_22_06 PM 1.png', 'gs-boy');
     addImg('ChatGPT Image Dec 26, 2025, 01_22_06 PM 2.png', 'gs-girl');
 
