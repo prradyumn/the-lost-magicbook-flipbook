@@ -14,6 +14,30 @@
   opacity:0;
   transition:opacity .4s ease;
 }
+
+/* Block text / element selection across the whole game and its
+   children — prevents the blue copy-paste highlight that browsers
+   show on double/triple-tap, the iOS context menu on long-press,
+   the dotted focus outlines on tap, and image-drag ghosts. */
+#gameOverlay,
+#gameOverlay *,
+#gameOverlay *::before,
+#gameOverlay *::after{
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+}
+#gameOverlay img{
+  -webkit-user-drag: none;
+     -khtml-user-drag: none;
+       -moz-user-drag: none;
+         -o-user-drag: none;
+  user-drag: none;
+}
 #gameOverlay.visible{ display:block; }
 #gameOverlay.show{ opacity:1; }
 
@@ -215,20 +239,26 @@
   pointer-events:none;
   z-index:5;
 }
-/* Text overlay sits ON TOP of the banner's baked-in artwork.
-   Covers the printed "Drag this toy..." text with an opaque
-   light-blue strip so we can put whatever text we want. */
+/* Banner speech text — sits directly on the question-template artwork.
+   Figma reports pos (187.29, 58.35) RELATIVE to the banner frame.
+   The banner itself sits at (35.69, 36.25), so the absolute stage
+   position is (222.98, 94.60). Size + typography match Figma exactly. */
 .gs-banner-text{
   position:absolute;
-  left:215px;top:60px;        /* clears the left-side girl avatar baked into the PNG */
-  right:80px;height:118px;
-  background:#C5E8F5;
-  border-radius:18px;
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Fredoka One','Nunito',sans-serif;
-  font-size:60px;font-weight:700;
-  color:#16447A;
-  letter-spacing:.5px;
+  left:222.98px;
+  top:94.60px;
+  width:1621.99px;
+  height:45px;
+  font-family:'Lilita One','Fredoka One','Nunito',sans-serif;
+  font-weight:400;
+  font-size:39.38px;
+  line-height:1;
+  letter-spacing:-0.01em;
+  color:#1B4880;
+  display:flex;
+  align-items:center;
+  text-align:left;
+  pointer-events:none;
   z-index:6;
 }
 
@@ -439,6 +469,109 @@
   75%  { transform: translate(var(--hand-dx), var(--hand-dy)) scale(1);   opacity:1; }
   90%  { transform: translate(var(--hand-dx), var(--hand-dy)) scale(.7);  opacity:0; }
   100% { transform: translate(0,0) scale(.9);                       opacity:0; }
+}
+
+/* =====================================================================
+   Celebration: camera pull-back + magical confetti
+   ===================================================================== */
+
+/* Stage starts zoomed-in on the cube shelf, then pulls back to normal.
+   `forwards` keeps the final value (= the base transform). On resize
+   after the animation ends, the JS removes the class so the base
+   transform takes over and responsive scaling keeps working. */
+.game-stage.celebration-camera{
+  animation: cameraPullback 2.4s cubic-bezier(.22, 1, .36, 1) forwards;
+}
+@keyframes cameraPullback{
+  0%{
+    transform: translate(-50%, -50%)
+               scale(var(--game-scale, 1))
+               translate(-220px, -300px)
+               scale(1.55);
+  }
+  100%{
+    transform: translate(-50%, -50%) scale(var(--game-scale, 1));
+  }
+}
+
+/* Confetti container — sits over everything, inside the stage so it
+   gets scaled with the camera. */
+.gs-confetti-container{
+  position:absolute;
+  inset:0;
+  z-index:200;
+  pointer-events:none;
+  overflow:visible;
+}
+
+/* Individual confetti particle. Variants below set the shape. */
+.gs-confetti{
+  position:absolute;
+  top:-60px;
+  --col:        #FFD93D;
+  --fall-x:     0px;
+  --spin:       720deg;
+  --dur:        4s;
+  --delay:      0s;
+  --start-scale: .5;
+  --peak-scale:  1;
+  animation: confettiFall var(--dur) var(--delay) cubic-bezier(.18,.67,.47,.96) forwards;
+  opacity:0;
+  will-change: transform, opacity;
+}
+
+@keyframes confettiFall{
+  0%{
+    transform: translate(0, 0) rotate(0deg) scale(var(--start-scale));
+    opacity:0;
+  }
+  10%{
+    opacity:1;
+    transform: translate(calc(var(--fall-x) * .10), 90px)
+               rotate(calc(var(--spin) * .10))
+               scale(var(--peak-scale));
+  }
+  85%{
+    opacity:1;
+    transform: translate(calc(var(--fall-x) * .85), 1000px)
+               rotate(calc(var(--spin) * .85))
+               scale(var(--peak-scale));
+  }
+  100%{
+    transform: translate(var(--fall-x), 1250px)
+               rotate(var(--spin))
+               scale(calc(var(--peak-scale) * .85));
+    opacity:0;
+  }
+}
+
+/* Round confetti — bright glowing dot. */
+.gs-confetti.circle{
+  width:14px; height:14px; border-radius:50%;
+  background: var(--col);
+  box-shadow: 0 0 10px var(--col), 0 0 20px var(--col);
+}
+/* Classic rectangular confetti — twirling chip. */
+.gs-confetti.chip{
+  width:14px; height:22px; border-radius:3px;
+  background: var(--col);
+  box-shadow: 0 0 8px var(--col);
+}
+/* 5-point star — magical glow. */
+.gs-confetti.star{
+  width:24px; height:24px;
+  background: var(--col);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%,
+                     50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  filter: drop-shadow(0 0 8px var(--col)) drop-shadow(0 0 14px var(--col));
+}
+/* 4-point sparkle diamond. */
+.gs-confetti.sparkle{
+  width:18px; height:18px;
+  background: var(--col);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%,
+                     50% 100%, 40% 60%, 0 50%, 40% 40%);
+  filter: drop-shadow(0 0 10px var(--col)) drop-shadow(0 0 16px var(--col));
 }
 
 /* Red flash on the row a wrong drop landed on. */

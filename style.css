@@ -128,6 +128,59 @@
       }
       .loader-bar-wrap { width:min(60%, 220px); height:7px; background:rgba(255,255,255,.25); border-radius:6px; overflow:hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,.35), 0 1px 2px rgba(0,0,0,.25); }
       .loader-bar { height:100%; width:0%; background:linear-gradient(90deg,#e0c8ff,#ffffff); border-radius:6px; transition:width .3s ease; box-shadow: 0 0 10px rgba(224,200,255,.85); }
+
+      /* Shape parade — 4 mini SVG shapes (cone, sphere, cylinder, cube)
+         hopping on a wave. Each lights up with a gold glow when the
+         progress bar reaches its threshold (25 / 50 / 75 / 100%). */
+      .loader-shape-parade{
+        display:flex;
+        gap:18px;
+        justify-content:center;
+        align-items:flex-end;
+        margin-top:18px;
+        height:48px;        /* room for the hop without clipping */
+      }
+      .ls-shape{
+        width:34px;
+        height:34px;
+        opacity:.40;
+        animation: lsHop 1.4s ease-in-out infinite;
+        transition: opacity .45s ease, filter .45s ease;
+        will-change: transform, filter;
+      }
+      .ls-shape:nth-child(1){ animation-delay: 0s;    }
+      .ls-shape:nth-child(2){ animation-delay: .18s;  }
+      .ls-shape:nth-child(3){ animation-delay: .36s;  }
+      .ls-shape:nth-child(4){ animation-delay: .54s;  }
+
+      /* Default (un-lit) shape fill: soft pastel blue, matches the
+         cupboard's left-column labels. */
+      .ls-shape polygon,
+      .ls-shape circle,
+      .ls-shape rect,
+      .ls-shape ellipse{
+        fill: #B7D7FF;
+        transition: fill .45s ease;
+      }
+
+      /* Lit state — gold + warm glow. */
+      .ls-shape.lit{
+        opacity:1;
+        filter:
+          drop-shadow(0 0 6px rgba(255,217,61,.95))
+          drop-shadow(0 0 14px rgba(255,176,80,.65));
+      }
+      .ls-shape.lit polygon,
+      .ls-shape.lit circle,
+      .ls-shape.lit rect,
+      .ls-shape.lit ellipse{
+        fill: #FFD93D;
+      }
+
+      @keyframes lsHop{
+        0%, 100% { transform: translateY(0)     scale(1);    }
+        50%      { transform: translateY(-12px) scale(1.08); }
+      }
       /* Responsive book scaling handled by JS via --book-scale */
 
       *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -192,6 +245,26 @@
         overflow:hidden;width:820px;height:472px;position:relative;
         touch-action:none;
         -webkit-user-select:none;user-select:none;
+      }
+
+      /* Block text / element selection across the whole flipbook + book
+         scene so double / triple-taps don't trigger the browser's blue
+         selection box or iOS long-press context menu. */
+      .book-scene,
+      .book-scene *,
+      .flipbook-viewport,
+      .flipbook-viewport *{
+        -webkit-user-select: none;
+           -moz-user-select: none;
+            -ms-user-select: none;
+                user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+      }
+      .book-scene img,
+      .flipbook-viewport img{
+        -webkit-user-drag: none;
+              user-drag: none;
       }
       .flipbook-viewport .container{position:absolute;top:50%;left:50%;}
 

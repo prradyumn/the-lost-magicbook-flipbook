@@ -4530,17 +4530,70 @@
 
       }
 
+      /* Game-phase assets warmed into the HTTP cache so the tutorials
+         and final sorting game start with zero asset lag. fetch() pulls
+         each into cache; the actual Image / Audio / model-viewer
+         elements later hit cache instantly. */
+      var GAME_ASSETS_TO_WARM = [
+        /* PNGs the game / tutorials reference */
+        './assets%20game/420.png',
+        './assets%20game/421.png',
+        './assets%20game/423.png',
+        './assets%20game/ChatGPT%20Image%20Dec%2026,%202025,%2001_22_06%20PM%201.png',
+        './assets%20game/ChatGPT%20Image%20Dec%2026,%202025,%2001_22_06%20PM%202.png',
+        './assets%20game/ChatGPT%20Image%20Dec%2029,%202025,%2001_55_04%20PM%201.png',
+        './assets%20game/Full%20cupboard.png',
+        './assets%20game/Group%2023.png',
+        './assets%20game/Group%20422.png',
+        './assets%20game/Question%20template.png',
+        './assets%20game/Swipe%20Up%20And%20Click%207.png',
+        './assets%20game/Vector%201.png',
+        './assets%20game/Vector.png',
+        './assets%20game/basketball.png',
+        './assets%20game/block%20(1).png',
+        './assets%20game/blur%20black.png',
+        './assets%20game/bucket.png',
+        './assets%20game/cone.png',
+        './assets%20game/dice.png',
+        './assets%20game/glow.png',
+        './assets%20game/image%20(18).png',
+        './assets%20game/jar.png',
+        './assets%20game/rubic.png',
+        './assets%20game/tennis%20ball.png',
+        './assets%20game/tree.png',
+        './cap.png',
+        /* 3D models — fetch fills the browser cache, so when
+           model-viewer instantiates later, the GLB loads instantly. */
+        './assets%20game/ToyBlock_ABC.glb',
+        './assets%20game/PartyHat.glb',
+        './assets%20game/SoccerBall.glb',
+        './assets%20game/ToyDrum.glb',
+        /* Audio used during tutorials + game */
+        './audio/u_vfd6lcdzng-ting-sound-197759.mp3'
+      ];
+
+      /* Light up the shape-parade icons as the progress bar crosses
+         their thresholds (25 / 50 / 75 / 100%). */
+      function updateShapeParade(percent){
+        var shapes = document.querySelectorAll('#loaderShapes .ls-shape');
+        for(var i = 0; i < shapes.length; i++){
+          var th = parseInt(shapes[i].getAttribute('data-threshold'), 10);
+          if(percent >= th) shapes[i].classList.add('lit');
+        }
+      }
+
       /* â”€â”€ Preload all assets, then show Start button â”€â”€ */
       function preloadAssets(callback){
         var videoUrls = [];
         var imageUrls = [];
-        STORY.pages.forEach(function(p){ 
-          if(p.video) videoUrls.push(p.video); 
+        STORY.pages.forEach(function(p){
+          if(p.video) videoUrls.push(p.video);
           if(p.image) imageUrls.push(p.image);
         });
         var uniqueVids = videoUrls.filter(function(v,i,a){ return a.indexOf(v) === i; });
         var uniqueImgs = imageUrls.filter(function(v,i,a){ return a.indexOf(v) === i; });
-        var totalAssets = uniqueVids.length + uniqueImgs.length;
+        var uniqueGame = GAME_ASSETS_TO_WARM.filter(function(v,i,a){ return a.indexOf(v) === i; });
+        var totalAssets = uniqueVids.length + uniqueImgs.length + uniqueGame.length;
         if(totalAssets === 0){ showStartButton(callback); return; }
 
         var loaded = 0;
@@ -4548,7 +4601,9 @@
 
         function assetLoaded(){
           loaded++;
-          if(bar) bar.style.width = Math.round((loaded/totalAssets)*100) + '%';
+          var percent = Math.round((loaded/totalAssets)*100);
+          if(bar) bar.style.width = percent + '%';
+          updateShapeParade(percent);
           if(loaded === totalAssets) onAllLoaded();
         }
 
@@ -4573,6 +4628,14 @@
           }).catch(function(){
             assetLoaded();
           });
+        });
+
+        /* Game assets (PNGs + GLBs + audio) — fetch into HTTP cache. */
+        uniqueGame.forEach(function(url){
+          fetch(url)
+            .then(function(r){ return r.blob(); })
+            .then(function(){ assetLoaded(); })
+            .catch(function(){ assetLoaded(); });
         });
 
         function onAllLoaded(){
@@ -4633,7 +4696,9 @@
         _appCallback = callback;
         var btn = document.getElementById('startBtn');
         var barWrap = document.querySelector('.loader-bar-wrap');
+        var parade = document.getElementById('loaderShapes');
         if(barWrap) barWrap.style.display = 'none';
+        if(parade) parade.style.display = 'none';
         if(btn) btn.style.display = 'inline-block';
       }
 

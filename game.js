@@ -854,7 +854,10 @@
     if(bt) bt.textContent = text;
   }
 
-  /* Final celebration after the last round. */
+  /* Final celebration after the last round. Camera pulls back from a
+     tight shot on the cube shelf to the full cupboard while a magical
+     confetti burst rains down. Hold for ~2 s of "admire the result",
+     then hand off to the flipbook. */
   function buildGameCelebration(){
     clearStage();
     addImg('blur black.png',    'gs-blur');
@@ -865,9 +868,68 @@
     var bt = addDiv('gs-banner-text');
     bt.textContent = 'Great job! You sorted them all!';
 
-    /* Hand control back to the queue (which will fade the overlay
-       and trigger onComplete → flipbook turns to page 5). */
-    setTimeout(close, 2800);
+    /* Trigger the camera pull-back animation on the stage. The class
+       is removed when the animation ends so the base responsive
+       transform takes over (and window-resizes keep working). */
+    stage.classList.add('celebration-camera');
+    setTimeout(function(){
+      stage.classList.remove('celebration-camera');
+    }, 2450);
+
+    /* Magical confetti burst — stars, sparkles, glowing dots in
+       gold / pink / purple / cyan, with random spin + horizontal drift. */
+    burstCelebrationConfetti();
+
+    /* Cheerful chime to punctuate the moment. */
+    try{ sfxCorrect(); }catch(e){}
+
+    /* Hand control back to the queue (which fades the overlay and
+       triggers onComplete → flipbook turns to page 5). Slightly
+       longer than before so camera + confetti can finish. */
+    setTimeout(close, 5000);
+  }
+
+  /* Spawn ~100 confetti particles inside the stage. Magical palette:
+     warm golds + pinks paired with cool violets + cyans so it reads
+     against any backdrop. Each particle picks a random shape, color,
+     fall trajectory, spin direction, scale, and delay. */
+  function burstCelebrationConfetti(){
+    var container = addDiv('gs-confetti-container');
+    var COLORS = [
+      '#FFD93D',  /* gold       */
+      '#FFB14F',  /* warm orange*/
+      '#FF6BCB',  /* pink       */
+      '#A66CFF',  /* magic purple */
+      '#7DD3FC',  /* cyan       */
+      '#6BCB77',  /* mint       */
+      '#FFFFFF'   /* sparkle white */
+    ];
+    var SHAPES = ['star', 'sparkle', 'circle', 'chip',
+                  'star', 'sparkle', 'circle'];   /* weight star/sparkle */
+    var COUNT = 110;
+
+    for(var i = 0; i < COUNT; i++){
+      var c = document.createElement('div');
+      var shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+      var color = COLORS[Math.floor(Math.random() * COLORS.length)];
+      c.className = 'gs-confetti ' + shape;
+      c.style.left = (Math.random() * 1920) + 'px';
+      c.style.setProperty('--col',   color);
+      c.style.setProperty('--fall-x',
+        ((Math.random() - 0.5) * 700) + 'px');
+      c.style.setProperty('--spin',
+        ((Math.random() > 0.5 ? 1 : -1) *
+         (360 + Math.random() * 720)) + 'deg');
+      c.style.setProperty('--dur',
+        (3.2 + Math.random() * 2.2) + 's');
+      c.style.setProperty('--delay',
+        (Math.random() * 1.6) + 's');
+      c.style.setProperty('--start-scale',
+        (0.35 + Math.random() * 0.25) + '');
+      c.style.setProperty('--peak-scale',
+        (0.85 + Math.random() * 0.55) + '');
+      container.appendChild(c);
+    }
   }
 
   /* ------------------------------------------------------------------ */

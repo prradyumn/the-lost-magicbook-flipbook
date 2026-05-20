@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Little Storybook</title>
     <link
-      href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,700;0,800;0,900;1,700&family=Fredoka+One&family=Lobster&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:ital,wght@0,700;0,800;0,900;1,700&family=Fredoka+One&family=Lobster&display=swap"
       rel="stylesheet"
     />
         <link rel="stylesheet" href="./style.css" />
@@ -22,6 +22,24 @@
         </div>
         <div class="loader-overlay">
           <div class="loader-bar-wrap"><div class="loader-bar" id="loaderBar"></div></div>
+          <!-- Shape parade: cone, sphere, cylinder, cube bounce on a wave;
+               each lights up when the bar crosses its threshold (25/50/75/100%). -->
+          <div class="loader-shape-parade" id="loaderShapes">
+            <svg class="ls-shape" data-threshold="25" viewBox="0 0 100 100" aria-hidden="true">
+              <polygon points="50,12 88,84 12,84" />
+            </svg>
+            <svg class="ls-shape" data-threshold="50" viewBox="0 0 100 100" aria-hidden="true">
+              <circle cx="50" cy="50" r="36" />
+            </svg>
+            <svg class="ls-shape" data-threshold="75" viewBox="0 0 100 100" aria-hidden="true">
+              <ellipse cx="50" cy="20" rx="30" ry="8" />
+              <rect x="20" y="20" width="60" height="60" />
+              <ellipse cx="50" cy="80" rx="30" ry="8" />
+            </svg>
+            <svg class="ls-shape" data-threshold="100" viewBox="0 0 100 100" aria-hidden="true">
+              <rect x="18" y="18" width="64" height="64" rx="4" />
+            </svg>
+          </div>
           <button
             id="startBtn"
             style="display:none;margin-top:14px;padding:10px 30px;font-family:'Fredoka One','Nunito',sans-serif;font-size:clamp(13px,1.6vw,16px);color:#3a0f6e;background:#ffffff;border:none;border-radius:50px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35), inset 0 -2px 0 rgba(0,0,0,.08);transition:transform .15s,box-shadow .15s;letter-spacing:.5px;"
