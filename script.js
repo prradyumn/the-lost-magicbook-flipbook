@@ -3599,10 +3599,10 @@
         var sx = (vw - pad) / BOOK_W;
         var sy = (vh - pad) / BOOK_H;
         var scale = Math.min(sx, sy);
-        /* Cap at 1.6Ã— so the book stays a comfortable, consistent visual
-           size on 1080p / 1440p / 4K monitors instead of dominating the
-           screen. Floor at 0.32 keeps it usable on tiny phones. */
-        scale = Math.max(0.32, Math.min(scale, 1.6));
+        /* Cap at 2.0Ã— so the book scales up generously on bigger screens
+           while still staying a comfortable size on 4K monitors.
+           Floor at 0.32 keeps it usable on tiny phones. */
+        scale = Math.max(0.32, Math.min(scale, 2.0));
         document.documentElement.style.setProperty('--book-scale', scale.toFixed(3));
       }
       updateBookScale();

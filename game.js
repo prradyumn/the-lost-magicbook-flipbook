@@ -41,7 +41,9 @@
       titleText: 'Cube',
       hero:   { x:708.35, y:532.21, w:503.30, h:503.30 },
       drag:   { x:178.47, y:492.99, w:278.65, h:278.65 },
-      placed: { x:948.02, y:861.00, w:172.10, h:172.10 },
+      /* Figma slide-100 cupboard@322 → block at (714, 852, 200x200);
+         we run with cupboard@582, so shift x by +260. */
+      placed: { x:974,    y:852,    w:200,    h:200 },
       target: { x:616.04, y:830.35, w:1220.45, h:218.55 },    /* bottom row */
       nudge:  { x:198.68, y:532.20, dx: 580, dy:  300 },
       dialogues:[
@@ -57,9 +59,8 @@
       titleText: 'Cone',
       hero:   { x:787.72, y:444.17, w:391.16, h:586.74 },
       drag:   { x:201.90, y:445.32, w:227.82, h:341.73 },
-      /* Placed: top row of cupboard, centered to line up with the cube
-         (cube center x=1034). Cone height 210 fits inside row 1 (y=238-457). */
-      placed: { x:964.00, y:247.00, w:140.00, h:210.00 },
+      /* Figma slide-100 cap (party hat) at (749, 266, 133x200); +260 shift. */
+      placed: { x:1009,   y:266,    w:133,    h:200 },
       target: { x:616.04, y:238.35, w:1220.45, h:218.55 },    /* top row    */
       nudge:  { x:180.65, y:570.83, dx: 620, dy: -280 },
       dialogues:[
@@ -76,9 +77,8 @@
       /* Sphere is symmetric — square bounds for all three slots. */
       hero:   { x:790.00, y:490.00, w:390.00, h:390.00 },
       drag:   { x:190.00, y:490.00, w:260.00, h:260.00 },
-      /* Placed: row 2 of cupboard, centered to line up with the cube.
-         Sphere 160px fits inside row 2 (y=435-653) with margin. */
-      placed: { x:954.00, y:483.00, w:160.00, h:160.00 },
+      /* Figma slide-100 football at (726, 466, 180x180); +260 shift. */
+      placed: { x:986,    y:466,    w:180,    h:180 },
       target: { x:616.04, y:435.68, w:1220.45, h:218.55 },    /* row 2      */
       nudge:  { x:210.00, y:530.00, dx: 600, dy:  -40 },
       dialogues:[
@@ -96,11 +96,8 @@
       /* Drum is roughly square — same bounds for all three slots. */
       hero:   { x:770.00, y:480.00, w:400.00, h:400.00 },
       drag:   { x:180.00, y:490.00, w:260.00, h:260.00 },
-      /* Placed: row 3 of cupboard. The drum PNG has transparent padding
-         around the visible drum, so we bump the slot size to 200 and
-         shift y down so the rendered drum visibly sits on the shelf
-         plank instead of floating above it. */
-      placed: { x:954.00, y:680.00, w:200.00, h:200.00 },
+      /* Figma slide-100 drum at (719, 664, 192x192); +260 shift. */
+      placed: { x:979,    y:664,    w:192,    h:192 },
       target: { x:616.04, y:633.01, w:1220.45, h:218.55 },    /* row 3      */
       nudge:  { x:200.00, y:530.00, dx: 600, dy:  140 },
       dialogues:[
@@ -231,8 +228,16 @@
     window.addEventListener('orientationchange', updateScale);
   }
 
+  /* Landscape: COVER — stage scales to fill the viewport completely,
+     extreme-aspect edges may be clipped by overlay's overflow:hidden.
+     Portrait: CONTAIN — stage fits with bands rather than clipping half
+     the design. Recomputed on every resize / orientation change. */
   function updateScale(){
-    var s = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+    var sx = window.innerWidth  / STAGE_W;
+    var sy = window.innerHeight / STAGE_H;
+    var s = (window.innerWidth >= window.innerHeight)
+      ? Math.max(sx, sy)
+      : Math.min(sx, sy);
     document.documentElement.style.setProperty('--game-scale', s.toFixed(4));
   }
 
@@ -563,25 +568,52 @@
      scaffolding has interesting things to land on. Placed positions
      sit to the right of the tutorial-placed shapes so the rows
      accumulate left-to-right as the game progresses. */
+  /* All placed positions come from Figma slide 100 (cupboard@322) with a
+     +260 x-shift applied so they line up with our cupboard@582. Sizes
+     match Figma exactly. Drag sizes are uniform (≈300) so each toy fills
+     the 397×397 spawn box prominently; tennis ball is smaller since its
+     placed form is tiny. */
   var TOYS = [
-    { png:'tree.png',   shape:'cone',
-      drag:   { w:340, h:420 },                    /* ~2x larger drag size */
-      placed: { x:1370, y:238, w:180, h:230 } },
-    { png:'bucket.png', shape:'cylinder',
+    /* CONE shelf — 2 additional items beyond tutorial-placed cap. */
+    { png:'tree.png',         shape:'cone',
       drag:   { w:340, h:340 },
-      placed: { x:1370, y:680, w:180, h:180 } },
-    { png:'dice.png',   shape:'cube',
+      /* Tree PNG has heavy transparent padding — bump bounds so the
+         rendered tree visibly matches the other cone-row items. */
+      placed: { x:1240, y:215, w:240, h:240 } },
+    { png:'cone.png',         shape:'cone',
+      drag:   { w:300, h:300 },
+      placed: { x:1570, y:266, w:207, h:207 } },
+    /* SPHERE shelf — 2 additional items beyond tutorial-placed football. */
+    { png:'basketball.png',   shape:'sphere',
+      drag:   { w:300, h:300 },
+      placed: { x:1293, y:474, w:176, h:176 } },
+    { png:'tennis ball.png',  shape:'sphere',
+      drag:   { w:200, h:200 },
+      placed: { x:1626, y:552, w: 88, h: 88 } },
+    /* CYLINDER shelf — 2 additional items beyond tutorial-placed drum. */
+    { png:'jar.png',          shape:'cylinder',
+      drag:   { w:300, h:300 },
+      placed: { x:1301, y:672, w:158, h:158 } },
+    { png:'bucket.png',       shape:'cylinder',
+      drag:   { w:300, h:300 },
+      placed: { x:1583, y:664, w:174, h:174 } },
+    /* CUBE shelf — 2 additional items beyond tutorial-placed block. */
+    { png:'dice.png',         shape:'cube',
       drag:   { w:340, h:340 },
-      placed: { x:1360, y:865, w:175, h:175 } },
-    { png:'rubic.png',  shape:'cube',
-      drag:   { w:340, h:340 },
-      placed: { x:1580, y:865, w:175, h:175 } }
+      /* Dice PNG has padding too — boost bounds so the visible dice
+         lines up with the block / rubic on the same shelf. */
+      placed: { x:1290, y:850, w:200, h:200 } },
+    { png:'rubic.png',        shape:'cube',
+      drag:   { w:300, h:300 },
+      placed: { x:1598, y:899, w:129, h:129 } }
   ];
 
-  /* Larger spawn box so it fits the 2x-size toys without clipping. */
-  var SPAWN_BOX_X = 60;
-  var SPAWN_BOX_W = 380;
-  var SPAWN_BOX_H = 380;
+  /* Spawn box — exact Figma position/size (node "Group 23" frame).
+     Fixed location for every round; toys appear inside it. */
+  var SPAWN_BOX_X = 118.81;
+  var SPAWN_BOX_Y = 422;
+  var SPAWN_BOX_W = 397.01;
+  var SPAWN_BOX_H = 397.01;
 
   var gameRound        = 0;
   var gameWrongCount   = 0;
@@ -611,19 +643,16 @@
     bt.id = 'gs-game-banner-text';
     bt.textContent = 'Drag this toy to the correct shelf.';
 
-    /* Spawn box centered vertically on the toy's target row, on the left. */
-    var target = TARGETS_BY_SHAPE[toy.shape];
-    var spawnY = target.y + (target.h - SPAWN_BOX_H) / 2;
-
+    /* Spawn box at the fixed Figma position (118.81, 422) × 397×397. */
     var box = addDiv('gs-spawn-box');
     box.style.left   = SPAWN_BOX_X + 'px';
-    box.style.top    = spawnY + 'px';
+    box.style.top    = SPAWN_BOX_Y + 'px';
     box.style.width  = SPAWN_BOX_W + 'px';
     box.style.height = SPAWN_BOX_H + 'px';
 
-    /* Draggable toy inside the spawn box */
+    /* Draggable toy centered inside the spawn box. */
     var pieceX = SPAWN_BOX_X + (SPAWN_BOX_W - toy.drag.w) / 2;
-    var pieceY = spawnY      + (SPAWN_BOX_H - toy.drag.h) / 2;
+    var pieceY = SPAWN_BOX_Y + (SPAWN_BOX_H - toy.drag.h) / 2;
 
     var piece = addDiv('gs-cube-drag gs-game-piece');
     piece.style.left   = pieceX + 'px';
