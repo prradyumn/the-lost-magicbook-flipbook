@@ -1,0 +1,74 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Little Storybook</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,700;0,800;0,900;1,700&family=Fredoka+One&family=Lobster&display=swap"
+      rel="stylesheet"
+    />
+        <link rel="stylesheet" href="./style.css" />
+        <link rel="stylesheet" href="./game.css" />
+        <!-- 3D model renderer for the GLB cube in the tutorial game -->
+        <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+  </head>
+  <body>
+    <!-- Preloader -->
+    <div id="preloader">
+      <div class="loader-stage">
+        <div class="loader-book">
+          <img class="loader-cover-img" src="cover.png" alt="The Lost Magic Book" />
+        </div>
+        <div class="loader-overlay">
+          <div class="loader-bar-wrap"><div class="loader-bar" id="loaderBar"></div></div>
+          <button
+            id="startBtn"
+            style="display:none;margin-top:14px;padding:10px 30px;font-family:'Fredoka One','Nunito',sans-serif;font-size:clamp(13px,1.6vw,16px);color:#3a0f6e;background:#ffffff;border:none;border-radius:50px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35), inset 0 -2px 0 rgba(0,0,0,.08);transition:transform .15s,box-shadow .15s;letter-spacing:.5px;"
+            onclick="startApp()"
+          >
+            &#9654; Start
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Themed background decorations (filled by applyTheme) -->
+    <svg
+      id="themeDecor"
+      style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0"
+      viewBox="0 0 1000 600"
+      preserveAspectRatio="none"
+    ></svg>
+
+    <button id="replayBtn" type="button" onclick="replayPage()"><span class="replay-icon" aria-hidden="true">&#8635;</span><span>Replay</span></button>
+    <audio id="bgMusic" loop preload="auto"></audio>
+
+    <div class="book-scene">
+      <div class="book-cover-wrap">
+        <div class="flipbook-viewport" style="position:relative">
+          <div class="container">
+            <div id="flipbook" dir="ltr"><!-- pages injected by JS --></div>
+          </div>
+          <!-- Overlay: text & bubbles sit above ALL turn.js pages, no clipping -->
+          <div id="storyOverlay"></div>
+          <!-- Book spine gutter â€” on top of everything -->
+          <div class="book-spine"></div>
+        </div>
+      </div>
+      <div class="pg-cnt" id="pgCnt">My Storybook</div>
+    </div>
+
+
+
+
+    <!-- 1st Cube tutorial game overlay (shown between page 4 and page 5) -->
+    <div id="gameOverlay">
+      <div class="game-stage" id="gameStage"></div>
+    </div>
+
+    <script src="./script.js"></script>
+    <script src="./game.js"></script>
+  </body>
+</html>
+

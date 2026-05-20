@@ -1,0 +1,932 @@
+/* ======================================================================
+   Shape Tutorial Game
+   N-screen, multi-shape sequence that plays between flipbook page 4
+   and page 5. No VOs (per spec) — uses tap-to-advance + on-screen text.
+   Shapes are configured in SHAPES below; queue them in any order.
+   ====================================================================== */
+(function(){
+  'use strict';
+
+  var ASSETS  = './assets%20game/';
+  var STAGE_W = 1920;
+  var STAGE_H = 1080;
+
+  /* Resolve an asset filename. If the name already begins with ./ ../ or /
+     it's treated as a path relative to the HTML page (so files in the
+     project root are reachable). Otherwise it's resolved as a filename in
+     the shared "assets game" folder. */
+  function resolveAsset(name){
+    if(!name) return '';
+    if(name.charAt(0) === '/' ||
+       name.indexOf('./')  === 0 ||
+       name.indexOf('../') === 0){
+      return name;
+    }
+    return ASSETS + encodeURI(name);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Per-shape configuration                                            */
+  /*  - hero/drag/placed/target are stage-local rects (top-left, w, h)   */
+  /*  - nudge.dx/dy = pixels the hand cursor travels per loop            */
+  /*  - png === null → no static PNG provided; static slots fall back    */
+  /*    to a non-rotating GLB (visually = a 3D rendering)                */
+  /*  - titlePng === null → render styled text using titleText           */
+  /* ------------------------------------------------------------------ */
+  var SHAPES = {
+    cube: {
+      glb:       'ToyBlock_ABC.glb',
+      png:       'block (1).png',
+      titlePng:  'Group 422.png',         /* "Cube" yellow title */
+      titleText: 'Cube',
+      hero:   { x:708.35, y:532.21, w:503.30, h:503.30 },
+      drag:   { x:178.47, y:492.99, w:278.65, h:278.65 },
+      placed: { x:948.02, y:861.00, w:172.10, h:172.10 },
+      target: { x:616.04, y:830.35, w:1220.45, h:218.55 },    /* bottom row */
+      nudge:  { x:198.68, y:532.20, dx: 580, dy:  300 },
+      dialogues:[
+        { speaker:'boy',  text:'I found a block.',              showTitle:false },
+        { speaker:'girl', text:'This shape is called a CUBE.',  showTitle:true  },
+        { speaker:'girl', text:'Let us place it on the shelf.', showTitle:true  }
+      ]
+    },
+    cone: {
+      glb:       'PartyHat.glb',
+      png:       './cap.png',             /* party-hat PNG in project root  */
+      titlePng:  '421.png',               /* "Cone" yellow title            */
+      titleText: 'Cone',
+      hero:   { x:787.72, y:444.17, w:391.16, h:586.74 },
+      drag:   { x:201.90, y:445.32, w:227.82, h:341.73 },
+      /* Placed: top row of cupboard, centered to line up with the cube
+         (cube center x=1034). Cone height 210 fits inside row 1 (y=238-457). */
+      placed: { x:964.00, y:247.00, w:140.00, h:210.00 },
+      target: { x:616.04, y:238.35, w:1220.45, h:218.55 },    /* top row    */
+      nudge:  { x:180.65, y:570.83, dx: 620, dy: -280 },
+      dialogues:[
+        { speaker:'boy',  text:'Look, Aany found this hat!',    showTitle:false },
+        { speaker:'girl', text:'This shape is called a CONE.',  showTitle:true  },
+        { speaker:'girl', text:'Let us place it on the shelf.', showTitle:true  }
+      ]
+    },
+    sphere: {
+      glb:       'SoccerBall.glb',
+      png:       'image (18).png',
+      titlePng:  '423.png',               /* "Sphere" yellow title */
+      titleText: 'Sphere',
+      /* Sphere is symmetric — square bounds for all three slots. */
+      hero:   { x:790.00, y:490.00, w:390.00, h:390.00 },
+      drag:   { x:190.00, y:490.00, w:260.00, h:260.00 },
+      /* Placed: row 2 of cupboard, centered to line up with the cube.
+         Sphere 160px fits inside row 2 (y=435-653) with margin. */
+      placed: { x:954.00, y:483.00, w:160.00, h:160.00 },
+      target: { x:616.04, y:435.68, w:1220.45, h:218.55 },    /* row 2      */
+      nudge:  { x:210.00, y:530.00, dx: 600, dy:  -40 },
+      dialogues:[
+        { speaker:'girl', text:'Look, your favourite toy!',      showTitle:false },
+        { speaker:'boy',  text:'Yes! A ball!',                   showTitle:false },
+        { speaker:'girl', text:'This shape is called a SPHERE.', showTitle:true  },
+        { speaker:'girl', text:'Let us place it on the shelf.',  showTitle:true  }
+      ]
+    },
+    cylinder: {
+      glb:       'ToyDrum.glb',
+      png:       'ChatGPT Image Dec 29, 2025, 01_55_04 PM 1.png',
+      titlePng:  '420.png',               /* "Cylinder" yellow title */
+      titleText: 'Cylinder',
+      /* Drum is roughly square — same bounds for all three slots. */
+      hero:   { x:770.00, y:480.00, w:400.00, h:400.00 },
+      drag:   { x:180.00, y:490.00, w:260.00, h:260.00 },
+      /* Placed: row 3 of cupboard. The drum PNG has transparent padding
+         around the visible drum, so we bump the slot size to 200 and
+         shift y down so the rendered drum visibly sits on the shelf
+         plank instead of floating above it. */
+      placed: { x:954.00, y:680.00, w:200.00, h:200.00 },
+      target: { x:616.04, y:633.01, w:1220.45, h:218.55 },    /* row 3      */
+      nudge:  { x:200.00, y:530.00, dx: 600, dy:  140 },
+      dialogues:[
+        { speaker:'girl', text:'A drum!',                          showTitle:false },
+        { speaker:'boy',  text:'I know this one!',                 showTitle:false },
+        { speaker:'girl', text:'This shape is called a CYLINDER.', showTitle:true  },
+        { speaker:'girl', text:'Let us place it on the shelf.',    showTitle:true  }
+      ]
+    }
+  };
+
+  var overlay, stage;
+  var currentShape  = null;
+  var currentScreen = 0;
+  var onComplete    = null;
+  var queue         = [];
+  var wrongAttempts = 0;
+  /* Cumulative list of shapes already placed in the cupboard during this
+     session — re-rendered on every subsequent shape's drag/success screen
+     so the cupboard stays populated as the tutorials progress. */
+  var placedShapes  = [];
+
+  /* "Ting" sound played whenever the user taps to advance a dialogue
+     (or taps the floating shape). One Audio instance is kept around;
+     each play clones it so overlapping taps still chime. */
+  var TING_SRC = './audio/u_vfd6lcdzng-ting-sound-197759.mp3';
+  var tingAudio = null;
+  function playTing(){
+    try{
+      if(!tingAudio){
+        tingAudio = new Audio(TING_SRC);
+        tingAudio.preload = 'auto';
+        tingAudio.volume = 0.9;
+      }
+      var s = tingAudio.cloneNode();
+      s.volume = 0.9;
+      var p = s.play();
+      if(p && p.catch) p.catch(function(){});
+    }catch(e){}
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  SFX (WebAudio synth — placeholder until real mp3s are dropped in)  */
+  /*  To replace with real audio: swap each sfxX function body to play   */
+  /*  an Audio() of the corresponding file (similar to playTing above).  */
+  /* ------------------------------------------------------------------ */
+  var _sfxCtx = null;
+  function _getSfxCtx(){
+    try{
+      if(!_sfxCtx){
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        if(!Ctx) return null;
+        _sfxCtx = new Ctx();
+      }
+      if(_sfxCtx.state === 'suspended'){ try{ _sfxCtx.resume(); }catch(e){} }
+      return _sfxCtx;
+    }catch(e){ return null; }
+  }
+  /* Pickup — short upward chirp when the user grabs a toy. */
+  function sfxPickup(){
+    var ctx = _getSfxCtx(); if(!ctx) return;
+    var t = ctx.currentTime;
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(520, t);
+    o.frequency.exponentialRampToValueAtTime(960, t + 0.12);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.25, t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    o.connect(g).connect(ctx.destination);
+    o.start(t); o.stop(t + 0.20);
+  }
+  /* Drop — soft thud when the user releases on a NEUTRAL spot (no
+     correct/wrong follow-up — used for general drag release feel). */
+  function sfxDrop(){
+    var ctx = _getSfxCtx(); if(!ctx) return;
+    var t = ctx.currentTime;
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(300, t);
+    o.frequency.exponentialRampToValueAtTime(170, t + 0.10);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.18, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+    o.connect(g).connect(ctx.destination);
+    o.start(t); o.stop(t + 0.15);
+  }
+  /* Correct — bright cheerful 3-note rising chime (E-G-C). */
+  function sfxCorrect(){
+    var ctx = _getSfxCtx(); if(!ctx) return;
+    var t0 = ctx.currentTime;
+    [659.25, 783.99, 1046.50].forEach(function(freq, i){
+      var t = t0 + i * 0.07;
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.22, t + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+      o.connect(g).connect(ctx.destination);
+      o.start(t); o.stop(t + 0.60);
+    });
+  }
+  /* Wrong — descending square-wave buzz for an incorrect drop. */
+  function sfxWrong(){
+    var ctx = _getSfxCtx(); if(!ctx) return;
+    var t = ctx.currentTime;
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'square';
+    o.frequency.setValueAtTime(220, t);
+    o.frequency.exponentialRampToValueAtTime(95, t + 0.28);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.18, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+    o.connect(g).connect(ctx.destination);
+    o.start(t); o.stop(t + 0.34);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Bootstrap                                                          */
+  /* ------------------------------------------------------------------ */
+  function init(){
+    overlay = document.getElementById('gameOverlay');
+    if(!overlay) return;
+    stage = document.getElementById('gameStage');
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    window.addEventListener('orientationchange', updateScale);
+  }
+
+  function updateScale(){
+    var s = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+    document.documentElement.style.setProperty('--game-scale', s.toFixed(4));
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Element helpers                                                    */
+  /* ------------------------------------------------------------------ */
+  function clearStage(){ stage.innerHTML = ''; }
+
+  function addImg(file, cls){
+    var el = document.createElement('img');
+    el.src = ASSETS + encodeURI(file);
+    el.className = cls;
+    el.draggable = false;
+    el.alt = '';
+    stage.appendChild(el);
+    return el;
+  }
+
+  function addDiv(cls){
+    var el = document.createElement('div');
+    el.className = cls;
+    stage.appendChild(el);
+    return el;
+  }
+
+  function applyRect(el, r){
+    el.style.left   = r.x + 'px';
+    el.style.top    = r.y + 'px';
+    el.style.width  = r.w + 'px';
+    el.style.height = r.h + 'px';
+  }
+
+  /* Render all previously-placed shapes statically on the cupboard.
+     Skips the current shape (its drag/placed piece is rendered separately
+     with its own pop / glow animations). */
+  function renderPersistentPlacements(){
+    for(var i = 0; i < placedShapes.length; i++){
+      var p = placedShapes[i];
+      var el = addDiv('gs-placed-static');
+      applyRect(el, p.placed);
+      var img = document.createElement('img');
+      img.src = resolveAsset(p.png);
+      img.draggable = false;
+      img.alt = '';
+      img.style.cssText = 'width:100%;height:100%;object-fit:contain;user-select:none;pointer-events:none;';
+      el.appendChild(img);
+    }
+  }
+
+  /* Floating hero shape — auto-rotating GLB with poster fallback. */
+  function makeShapeViewer(){
+    var mv = document.createElement('model-viewer');
+    mv.setAttribute('src', resolveAsset(currentShape.glb));
+    mv.setAttribute('alt', 'Toy shape');
+    mv.setAttribute('auto-rotate', '');
+    mv.setAttribute('rotation-per-second', '55deg');
+    mv.setAttribute('auto-rotate-delay', '0');
+    mv.setAttribute('disable-zoom', '');
+    mv.setAttribute('interaction-prompt', 'none');
+    mv.setAttribute('shadow-intensity', '0');
+    mv.setAttribute('exposure', '1.15');
+    mv.setAttribute('environment-image', 'neutral');
+    mv.style.cssText =
+      'width:100%;height:100%;display:block;background:transparent;' +
+      'pointer-events:none;border:none;outline:none;' +
+      '--poster-color:transparent;' +
+      '--progress-bar-color:transparent;' +
+      '--progress-bar-height:0px;';
+
+    /* No <img slot="poster"> here — we used to add the shape PNG as a
+       loading fallback, but on every dialogue screen rebuild it would
+       flash for a frame before the GLB rendered. Dialogue screens must
+       show only the 3D model; the PNG is reserved for drag/placed. */
+    return mv;
+  }
+
+  /* Drag / placed shape — PNG if provided, else a static (non-rotating)
+     GLB so it visually matches the hero pose. */
+  function makeShapeStatic(){
+    if(currentShape.png){
+      var img = document.createElement('img');
+      img.src = resolveAsset(currentShape.png);
+      img.draggable = false;
+      img.alt = '';
+      img.style.cssText =
+        'width:100%;height:100%;object-fit:contain;' +
+        'user-select:none;-webkit-user-drag:none;pointer-events:none;';
+      return img;
+    }
+    var mv = makeShapeViewer();
+    mv.removeAttribute('auto-rotate');
+    return mv;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Screen builders                                                    */
+  /* ------------------------------------------------------------------ */
+
+  /* Screens 1-3: characters + hero shape + speech bubble */
+  function buildDialogue(idx){
+    var d = currentShape.dialogues[idx];
+    clearStage();
+
+    addImg('blur black.png', 'gs-blur');
+    addDiv('gs-spotlight');
+    addImg('ChatGPT Image Dec 26, 2025, 01_22_06 PM 1.png', 'gs-boy');
+    addImg('ChatGPT Image Dec 26, 2025, 01_22_06 PM 2.png', 'gs-girl');
+
+    /* Hero — auto-rotating 3D GLB */
+    var hero = addDiv('gs-cube-hero');
+    applyRect(hero, currentShape.hero);
+    hero.appendChild(makeShapeViewer());
+
+    /* Shape title — visibility set per-dialogue (showTitle flag) */
+    if(d.showTitle){
+      if(currentShape.titlePng){
+        var tPng = addDiv('gs-title');
+        var tImg = document.createElement('img');
+        tImg.src = resolveAsset(currentShape.titlePng);
+        tImg.draggable = false;
+        tPng.appendChild(tImg);
+      } else {
+        var tTxt = addDiv('gs-title gs-title-text');
+        tTxt.textContent = currentShape.titleText;
+      }
+    }
+
+    /* Speech bubble */
+    var b = addDiv('gs-bubble ' + (d.speaker === 'boy' ? 'left' : 'right'));
+    var bBg = document.createElement('img');
+    bBg.className = 'gs-bubble-bg';
+    bBg.src = ASSETS + encodeURI('Vector.png');
+    bBg.draggable = false;
+    bBg.alt = '';
+    b.appendChild(bBg);
+    var bTxt = document.createElement('div');
+    bTxt.className = 'gs-bubble-text';
+    bTxt.textContent = d.text;
+    b.appendChild(bTxt);
+
+    /* Tap-to-advance — plays the ting sound on every tap. */
+    var catcher = addDiv('gs-clickcatcher');
+    var hint    = addDiv('gs-tap-hint');
+    hint.textContent = 'Tap to continue';
+    setTimeout(function(){
+      catcher.addEventListener('pointerdown', function(){
+        playTing();
+        nextScreen();
+      }, { once:true });
+    }, 500);
+  }
+
+  /* Screen 4 — drag to correct shelf row */
+  function buildDragScreen(){
+    clearStage();
+    wrongAttempts = 0;
+
+    addImg('blur black.png',    'gs-blur');
+    addImg('Full cupboard.png', 'gs-cupboard');
+
+    /* Re-render shapes placed in earlier tutorials so the cupboard
+       stays populated as the player progresses. */
+    renderPersistentPlacements();
+
+    /* Target highlight */
+    var target = addDiv('gs-target-zone');
+    applyRect(target, currentShape.target);
+
+    /* Top banner + text */
+    addImg('Question template.png', 'gs-banner');
+    var bt = addDiv('gs-banner-text');
+    bt.textContent = 'Drag this toy to the correct shelf.';
+
+    /* Pickup frame around drag-start */
+    addImg('Group 23.png', 'gs-banner-avatar');
+
+    /* Draggable shape */
+    var piece = addDiv('gs-cube-drag');
+    applyRect(piece, currentShape.drag);
+    piece.appendChild(makeShapeStatic());
+
+    /* Animated hand nudge */
+    var nudge = addImg('Swipe Up And Click 7.png', 'gs-hand-nudge');
+    nudge.style.left = currentShape.nudge.x + 'px';
+    nudge.style.top  = currentShape.nudge.y + 'px';
+    nudge.style.setProperty('--hand-dx', currentShape.nudge.dx + 'px');
+    nudge.style.setProperty('--hand-dy', currentShape.nudge.dy + 'px');
+
+    setupDrag(piece, target, nudge);
+  }
+
+  /* Screen 5 — success */
+  function buildSuccessScreen(){
+    clearStage();
+
+    addImg('blur black.png',    'gs-blur');
+    addImg('Full cupboard.png', 'gs-cupboard');
+
+    /* Render shapes placed in earlier tutorials, then the just-placed
+       one on top with its pop-in animation. */
+    renderPersistentPlacements();
+
+    addImg('Question template.png', 'gs-banner');
+    var bt = addDiv('gs-banner-text');
+    bt.textContent = 'Well done!';
+
+    var placed = addDiv('gs-cube-placed');
+    applyRect(placed, currentShape.placed);
+    placed.appendChild(makeShapeStatic());
+
+    /* Auto-advance: next shape, or fade out and call onComplete */
+    setTimeout(close, 2200);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Drag-and-drop                                                      */
+  /* ------------------------------------------------------------------ */
+  function setupDrag(piece, target, nudge){
+    var dragging = false;
+    var offX = 0, offY = 0;
+    var stageRect, scale;
+
+    function toStage(clientX, clientY){
+      stageRect = stage.getBoundingClientRect();
+      scale = stageRect.width / STAGE_W;
+      return {
+        x: (clientX - stageRect.left) / scale,
+        y: (clientY - stageRect.top)  / scale
+      };
+    }
+
+    function onDown(e){
+      e.preventDefault();
+      dragging = true;
+      piece.classList.add('dragging');
+      if(nudge) nudge.style.display = 'none';
+      sfxPickup();
+
+      var p = toStage(e.clientX, e.clientY);
+      var rect = piece.getBoundingClientRect();
+      var pieceLeft = (rect.left - stageRect.left) / scale;
+      var pieceTop  = (rect.top  - stageRect.top)  / scale;
+      offX = p.x - pieceLeft;
+      offY = p.y - pieceTop;
+
+      window.addEventListener('pointermove',   onMove);
+      window.addEventListener('pointerup',     onUp);
+      window.addEventListener('pointercancel', onUp);
+    }
+
+    function onMove(e){
+      if(!dragging) return;
+      var p = toStage(e.clientX, e.clientY);
+      piece.style.left = (p.x - offX) + 'px';
+      piece.style.top  = (p.y - offY) + 'px';
+    }
+
+    function onUp(){
+      if(!dragging) return;
+      dragging = false;
+      piece.classList.remove('dragging');
+      window.removeEventListener('pointermove',   onMove);
+      window.removeEventListener('pointerup',     onUp);
+      window.removeEventListener('pointercancel', onUp);
+
+      var rect = piece.getBoundingClientRect();
+      var cx = (rect.left + rect.width / 2  - stageRect.left) / scale;
+      var cy = (rect.top  + rect.height / 2 - stageRect.top)  / scale;
+      var t  = currentShape.target;
+
+      var inside = (cx >= t.x && cx <= t.x + t.w &&
+                    cy >= t.y && cy <= t.y + t.h);
+
+      if(inside){
+        piece.classList.add('correct-snap');
+        target.style.opacity = '0';
+        sfxCorrect();
+        var p = currentShape.placed;
+        piece.style.transition =
+          'left .4s cubic-bezier(.34,1.56,.64,1), ' +
+          'top .4s cubic-bezier(.34,1.56,.64,1), ' +
+          'width .4s ease, height .4s ease';
+        piece.style.left   = p.x + 'px';
+        piece.style.top    = p.y + 'px';
+        piece.style.width  = p.w + 'px';
+        piece.style.height = p.h + 'px';
+        /* Record this placement so future tutorials' cupboard shows it. */
+        placedShapes.push({
+          png: currentShape.png,
+          placed: { x:p.x, y:p.y, w:p.w, h:p.h }
+        });
+        setTimeout(nextScreen, 480);
+      } else {
+        wrongAttempts++;
+        sfxWrong();
+        piece.classList.add('bounce-wrong');
+        piece.style.transition =
+          'left .45s cubic-bezier(.34,1.56,.64,1), ' +
+          'top .45s cubic-bezier(.34,1.56,.64,1)';
+        piece.style.left = currentShape.drag.x + 'px';
+        piece.style.top  = currentShape.drag.y + 'px';
+        setTimeout(function(){
+          piece.style.transition = '';
+          piece.classList.remove('bounce-wrong');
+          if(nudge) nudge.style.display = '';
+        }, 500);
+      }
+    }
+
+    piece.addEventListener('pointerdown', onDown);
+  }
+
+  /* ================================================================== */
+  /*  FINAL SORTING GAME                                                  */
+  /*  Plays after all shape tutorials. Multi-round drag-and-drop where    */
+  /*  new toys spawn on the left and the player drags each one onto the  */
+  /*  cupboard row whose label matches the toy's 3D shape.                */
+  /* ================================================================== */
+  var TARGETS_BY_SHAPE = {
+    cone:     { x:616.04, y:238.35, w:1220.45, h:218.55 },
+    sphere:   { x:616.04, y:435.68, w:1220.45, h:218.55 },
+    cylinder: { x:616.04, y:633.01, w:1220.45, h:218.55 },
+    cube:     { x:616.04, y:830.35, w:1220.45, h:218.55 }
+  };
+
+  /* Each toy in this list becomes one round of the sorting game.
+     Order matters — dice/rubic at the end so the wrong-attempt
+     scaffolding has interesting things to land on. Placed positions
+     sit to the right of the tutorial-placed shapes so the rows
+     accumulate left-to-right as the game progresses. */
+  var TOYS = [
+    { png:'tree.png',   shape:'cone',
+      drag:   { w:340, h:420 },                    /* ~2x larger drag size */
+      placed: { x:1370, y:238, w:180, h:230 } },
+    { png:'bucket.png', shape:'cylinder',
+      drag:   { w:340, h:340 },
+      placed: { x:1370, y:680, w:180, h:180 } },
+    { png:'dice.png',   shape:'cube',
+      drag:   { w:340, h:340 },
+      placed: { x:1360, y:865, w:175, h:175 } },
+    { png:'rubic.png',  shape:'cube',
+      drag:   { w:340, h:340 },
+      placed: { x:1580, y:865, w:175, h:175 } }
+  ];
+
+  /* Larger spawn box so it fits the 2x-size toys without clipping. */
+  var SPAWN_BOX_X = 60;
+  var SPAWN_BOX_W = 380;
+  var SPAWN_BOX_H = 380;
+
+  var gameRound        = 0;
+  var gameWrongCount   = 0;
+  var gameNudgeTimer   = null;
+
+  /* Build a single sorting-game round.  */
+  function buildGameRound(idx){
+    clearStage();
+    clearTimeout(gameNudgeTimer);
+    gameWrongCount = 0;
+
+    if(idx < 0 || idx >= TOYS.length){
+      buildGameCelebration();
+      return;
+    }
+    var toy = TOYS[idx];
+
+    addImg('blur black.png',    'gs-blur');
+    addImg('Full cupboard.png', 'gs-cupboard');
+
+    /* All previously-placed toys (tutorial + earlier rounds) */
+    renderPersistentPlacements();
+
+    /* Top banner — Aanya speaks */
+    addImg('Question template.png', 'gs-banner');
+    var bt = addDiv('gs-banner-text');
+    bt.id = 'gs-game-banner-text';
+    bt.textContent = 'Drag this toy to the correct shelf.';
+
+    /* Spawn box centered vertically on the toy's target row, on the left. */
+    var target = TARGETS_BY_SHAPE[toy.shape];
+    var spawnY = target.y + (target.h - SPAWN_BOX_H) / 2;
+
+    var box = addDiv('gs-spawn-box');
+    box.style.left   = SPAWN_BOX_X + 'px';
+    box.style.top    = spawnY + 'px';
+    box.style.width  = SPAWN_BOX_W + 'px';
+    box.style.height = SPAWN_BOX_H + 'px';
+
+    /* Draggable toy inside the spawn box */
+    var pieceX = SPAWN_BOX_X + (SPAWN_BOX_W - toy.drag.w) / 2;
+    var pieceY = spawnY      + (SPAWN_BOX_H - toy.drag.h) / 2;
+
+    var piece = addDiv('gs-cube-drag gs-game-piece');
+    piece.style.left   = pieceX + 'px';
+    piece.style.top    = pieceY + 'px';
+    piece.style.width  = toy.drag.w + 'px';
+    piece.style.height = toy.drag.h + 'px';
+    var img = document.createElement('img');
+    img.src = resolveAsset(toy.png);
+    img.draggable = false;
+    img.alt = '';
+    img.style.cssText = 'width:100%;height:100%;object-fit:contain;' +
+                        'user-select:none;-webkit-user-drag:none;pointer-events:none;';
+    piece.appendChild(img);
+
+    setupGameDrag(piece, toy, pieceX, pieceY);
+
+    /* Nudge after 3s idle (per spec) */
+    scheduleGameNudge(toy, pieceX, pieceY);
+  }
+
+  /* Place / animate nudge arrow + hand from spawn to correct shelf. */
+  function showGameNudge(toy, pieceX, pieceY){
+    hideGameNudge();
+    var target = TARGETS_BY_SHAPE[toy.shape];
+    var targetCx = target.x + target.w / 2;
+    var targetCy = target.y + target.h / 2;
+    var startCx  = pieceX + toy.drag.w / 2;
+    var startCy  = pieceY + toy.drag.h / 2;
+    var dx = targetCx - startCx;
+    var dy = targetCy - startCy;
+    var dist = Math.sqrt(dx*dx + dy*dy);
+    var angleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
+
+    /* Vector 1 dashed arc — stretched along the spawn→target line */
+    var arrow = addImg('Vector 1.png', 'gs-game-nudge-arrow');
+    arrow.style.left   = startCx + 'px';
+    arrow.style.top    = (startCy - 60) + 'px';
+    arrow.style.width  = dist + 'px';
+    arrow.style.height = '120px';
+    arrow.style.transformOrigin = '0 50%';
+    arrow.style.transform = 'rotate(' + angleDeg + 'deg)';
+
+    /* Hand glides from spawn toward target */
+    var hand = addImg('Swipe Up And Click 7.png', 'gs-game-nudge-hand');
+    hand.style.left = (startCx - 110) + 'px';
+    hand.style.top  = (startCy - 110) + 'px';
+    hand.style.setProperty('--hand-dx', dx + 'px');
+    hand.style.setProperty('--hand-dy', dy + 'px');
+  }
+  function hideGameNudge(){
+    if(!stage) return;
+    var arr = stage.querySelector('.gs-game-nudge-arrow');
+    var hd  = stage.querySelector('.gs-game-nudge-hand');
+    if(arr) arr.remove();
+    if(hd)  hd.remove();
+  }
+  function scheduleGameNudge(toy, pieceX, pieceY){
+    clearTimeout(gameNudgeTimer);
+    gameNudgeTimer = setTimeout(function(){
+      showGameNudge(toy, pieceX, pieceY);
+    }, 3000);
+  }
+
+  /* Identify which shelf row (if any) the given stage-coord point lands on.
+     Returns the shape-name ('cube' | 'cone' | 'sphere' | 'cylinder') or null. */
+  function rowAt(x, y){
+    for(var k in TARGETS_BY_SHAPE){
+      var t = TARGETS_BY_SHAPE[k];
+      if(x >= t.x && x <= t.x + t.w &&
+         y >= t.y && y <= t.y + t.h){
+        return k;
+      }
+    }
+    return null;
+  }
+
+  /* Briefly flash a row red to signal a wrong drop. */
+  function flashWrongRow(shapeKey){
+    var t = TARGETS_BY_SHAPE[shapeKey];
+    if(!t) return;
+    var flash = addDiv('gs-game-row-flash');
+    applyRect(flash, t);
+    setTimeout(function(){ if(flash.parentNode) flash.remove(); }, 600);
+  }
+
+  /* Drag handler dedicated to the sorting game. Reuses the same pointer
+     math as setupDrag but with row hit-tests and per-toy snap targets. */
+  function setupGameDrag(piece, toy, startX, startY){
+    var dragging = false;
+    var offX = 0, offY = 0;
+    var stageRect, scale;
+
+    function toStage(clientX, clientY){
+      stageRect = stage.getBoundingClientRect();
+      scale = stageRect.width / STAGE_W;
+      return {
+        x: (clientX - stageRect.left) / scale,
+        y: (clientY - stageRect.top)  / scale
+      };
+    }
+
+    function onDown(e){
+      e.preventDefault();
+      dragging = true;
+      piece.classList.add('dragging');
+      clearTimeout(gameNudgeTimer);
+      hideGameNudge();
+      sfxPickup();
+
+      var p = toStage(e.clientX, e.clientY);
+      var rect = piece.getBoundingClientRect();
+      var pieceLeft = (rect.left - stageRect.left) / scale;
+      var pieceTop  = (rect.top  - stageRect.top)  / scale;
+      offX = p.x - pieceLeft;
+      offY = p.y - pieceTop;
+
+      window.addEventListener('pointermove',   onMove);
+      window.addEventListener('pointerup',     onUp);
+      window.addEventListener('pointercancel', onUp);
+    }
+
+    function onMove(e){
+      if(!dragging) return;
+      var p = toStage(e.clientX, e.clientY);
+      piece.style.left = (p.x - offX) + 'px';
+      piece.style.top  = (p.y - offY) + 'px';
+    }
+
+    function onUp(){
+      if(!dragging) return;
+      dragging = false;
+      piece.classList.remove('dragging');
+      window.removeEventListener('pointermove',   onMove);
+      window.removeEventListener('pointerup',     onUp);
+      window.removeEventListener('pointercancel', onUp);
+
+      var rect = piece.getBoundingClientRect();
+      var cx = (rect.left + rect.width / 2  - stageRect.left) / scale;
+      var cy = (rect.top  + rect.height / 2 - stageRect.top)  / scale;
+      var landed = rowAt(cx, cy);
+
+      if(landed === toy.shape){
+        /* CORRECT */
+        piece.classList.add('correct-snap');
+        sfxCorrect();
+        var p = toy.placed;
+        piece.style.transition =
+          'left .45s cubic-bezier(.34,1.56,.64,1), ' +
+          'top .45s cubic-bezier(.34,1.56,.64,1), ' +
+          'width .45s ease, height .45s ease';
+        piece.style.left   = p.x + 'px';
+        piece.style.top    = p.y + 'px';
+        piece.style.width  = p.w + 'px';
+        piece.style.height = p.h + 'px';
+        placedShapes.push({
+          png: toy.png,
+          placed: { x:p.x, y:p.y, w:p.w, h:p.h }
+        });
+        updateGameBanner('That is correct!');
+        setTimeout(function(){
+          gameRound++;
+          buildGameRound(gameRound);
+        }, 1200);
+      } else {
+        /* WRONG — bounce back, flash the row they landed on (if any),
+           and on the 2nd attempt swap the banner text. */
+        gameWrongCount++;
+        sfxWrong();
+        if(landed){ flashWrongRow(landed); }
+        piece.classList.add('bounce-wrong');
+        piece.style.transition =
+          'left .45s cubic-bezier(.34,1.56,.64,1), ' +
+          'top .45s cubic-bezier(.34,1.56,.64,1)';
+        piece.style.left = startX + 'px';
+        piece.style.top  = startY + 'px';
+        setTimeout(function(){
+          piece.style.transition = '';
+          piece.classList.remove('bounce-wrong');
+        }, 500);
+
+        if(gameWrongCount >= 2){
+          updateGameBanner('Oops! Try again.');
+          setTimeout(function(){
+            updateGameBanner('Drag this toy to the correct shelf.');
+          }, 2200);
+        }
+        /* Re-arm the nudge so it shows up after another idle window. */
+        scheduleGameNudge(toy, startX, startY);
+      }
+    }
+
+    piece.addEventListener('pointerdown', onDown);
+  }
+
+  function updateGameBanner(text){
+    var bt = document.getElementById('gs-game-banner-text');
+    if(bt) bt.textContent = text;
+  }
+
+  /* Final celebration after the last round. */
+  function buildGameCelebration(){
+    clearStage();
+    addImg('blur black.png',    'gs-blur');
+    addImg('Full cupboard.png', 'gs-cupboard');
+    renderPersistentPlacements();
+
+    addImg('Question template.png', 'gs-banner');
+    var bt = addDiv('gs-banner-text');
+    bt.textContent = 'Great job! You sorted them all!';
+
+    /* Hand control back to the queue (which will fade the overlay
+       and trigger onComplete → flipbook turns to page 5). */
+    setTimeout(close, 2800);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Screen orchestration                                               */
+  /*  Built per-shape so each shape can have its own dialogue count      */
+  /*  (cube/cone = 3 lines, sphere = 4 lines).                           */
+  /* ------------------------------------------------------------------ */
+  var SCREENS = [];
+
+  function buildScreensForCurrentShape(){
+    var arr = [];
+    for(var i = 0; i < currentShape.dialogues.length; i++){
+      (function(idx){
+        arr.push(function(){ buildDialogue(idx); });
+      })(i);
+    }
+    arr.push(function(){ buildDragScreen();    });
+    arr.push(function(){ buildSuccessScreen(); });
+    return arr;
+  }
+
+  function showScreen(idx){
+    currentScreen = idx;
+    SCREENS[idx]();
+  }
+
+  function nextScreen(){
+    if(currentScreen < SCREENS.length - 1){
+      showScreen(currentScreen + 1);
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Public API — chained shape sequence                                */
+  /* ------------------------------------------------------------------ */
+  function playNextShape(){
+    if(queue.length === 0){
+      /* All shapes complete — fade overlay and call onComplete */
+      overlay.classList.remove('show');
+      setTimeout(function(){
+        overlay.classList.remove('visible');
+        clearStage();
+        var cb = onComplete; onComplete = null;
+        if(cb) cb();
+      }, 400);
+      return;
+    }
+    var key = queue.shift();
+    if(key === 'game'){
+      /* Hand off to the sorting game; its rounds + celebration
+         will call close() (→ playNextShape) when finished. */
+      gameRound = 0;
+      buildGameRound(0);
+      return;
+    }
+    currentShape = SHAPES[key];
+    if(!currentShape){ playNextShape(); return; }
+    SCREENS = buildScreensForCurrentShape();
+    showScreen(0);
+  }
+
+  function openShapes(shapes, cb){
+    if(!stage) init();
+    if(!stage) return;
+    if(!Array.isArray(shapes)) shapes = [shapes];
+    queue = shapes.slice();
+    onComplete = cb || null;
+    placedShapes = [];          /* fresh cupboard at the start of a run */
+    overlay.classList.add('visible');
+    void overlay.offsetWidth;
+    overlay.classList.add('show');
+    playNextShape();
+  }
+
+  /* Called by the success-screen timeout. Advances to the next shape
+     in the queue (or fades out if the queue is empty). */
+  function close(){
+    playNextShape();
+  }
+
+  /* Auto-init when DOM is ready */
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  /* Public:
+       startShapeGames(['cube','cone'], onAllDone)  — preferred, chained
+       startCubeGame(onDone)                        — backward compat */
+  window.startShapeGames = openShapes;
+  window.startCubeGame   = function(cb){ openShapes(['cube'], cb); };
+})();
