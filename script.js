@@ -3475,6 +3475,51 @@
              + paw(60,540,1.1,10)+paw(150,470,.9,-20)
              + paw(940,540,1.1,-10)+paw(860,470,.9,30);
       }
+      /* Game-themed scatter — cube / sphere / cone / cylinder mini icons
+         peppered around the book's purple backdrop so the surround
+         echoes what the kid is learning inside the book. */
+      function decorShapes(color){
+        color = color || 'rgba(255,255,255,.4)';
+        function tri(cx, cy, sc, rot){
+          sc = (sc || 1) * 22; rot = rot || 0;
+          var p = '0,' + (-sc) + ' '
+                + (sc*0.87) + ',' + (sc*0.55) + ' '
+                + (-sc*0.87) + ',' + (sc*0.55);
+          return '<polygon transform="translate('+cx+','+cy+') rotate('+rot+')" '
+               + 'points="'+p+'" fill="'+color+'"/>';
+        }
+        function circ(cx, cy, sc){
+          sc = (sc || 1) * 20;
+          return '<circle cx="'+cx+'" cy="'+cy+'" r="'+sc+'" fill="'+color+'"/>';
+        }
+        function sq(cx, cy, sc, rot){
+          sc = (sc || 1) * 20; rot = rot || 0;
+          return '<rect transform="translate('+cx+','+cy+') rotate('+rot+')" '
+               + 'x="'+(-sc)+'" y="'+(-sc)+'" width="'+(sc*2)+'" height="'+(sc*2)+'" '
+               + 'rx="3" fill="'+color+'"/>';
+        }
+        function cyl(cx, cy, sc, rot){
+          sc = (sc || 1) * 16; rot = rot || 0;
+          return '<rect transform="translate('+cx+','+cy+') rotate('+rot+')" '
+               + 'x="'+(-sc)+'" y="'+(-sc*1.4)+'" '
+               + 'width="'+(sc*2)+'" height="'+(sc*2.8)+'" '
+               + 'rx="'+sc+'" fill="'+color+'"/>';
+        }
+        /* Mix all 4 shape types around the edges; rotations stagger so
+           the pattern doesn't look like a grid. */
+        return tri(55, 60, 1.2, -10)
+             + circ(150, 130, .9)
+             + sq(50, 180, 1, 18)
+             + cyl(945, 60, 1.2, 12)
+             + tri(870, 140, .9, 25)
+             + circ(950, 200, 1)
+             + sq(60, 540, 1.1, -20)
+             + cyl(150, 470, .9, -8)
+             + tri(940, 540, 1.1, 15)
+             + circ(860, 470, .9)
+             + sq(500, 80, .8, 30)
+             + circ(500, 520, .8);
+      }
       function decorTools(color){
         color = color || 'rgba(255,255,255,.35)';
         function hammer(cx,cy,sc,rot){
@@ -3557,7 +3602,7 @@
         // From screenshots
         sky:         { bg:'#A4E5F5', cover:'#F26AAB', coverDark:'#C44A86', coverLight:'#FF8FC2', accent:'#F26AAB', decor:function(){ return decorClouds('white'); } },
         starPink:    { bg:'#F582B6', cover:'#FFD93D', coverDark:'#D9A800', coverLight:'#FFE873', accent:'#1FB5A8', decor:function(){ return decorStars('rgba(217,90,150,.55)', 1.1); } },
-        pawYellow:   { bg:'#FFD93D', cover:'#7B2630', coverDark:'#5C1B23', coverLight:'#9C3641', accent:'#7B2630', decor:function(){ return decorPaws('rgba(243,180,42,.55)'); } },
+        pawYellow:   { bg:'#FFD93D', cover:'#7B2630', coverDark:'#5C1B23', coverLight:'#9C3641', accent:'#7B2630', decor:function(){ return decorShapes('rgba(243,180,42,.55)'); } },
         toolBlue:    { bg:'#48D6F2', cover:'#7B2FBE', coverDark:'#5e18a8', coverLight:'#9B4FDE', accent:'#7B2FBE', decor:function(){ return decorTools('rgba(120,210,235,.55)'); } },
         starYellow:  { bg:'#FFD93D', cover:'#7B2FBE', coverDark:'#5e18a8', coverLight:'#9B4FDE', accent:'#7B2FBE', decor:function(){ return decorStars('rgba(255,220,0,.45)', 1); } },
 
