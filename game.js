@@ -139,6 +139,24 @@
     }catch(e){}
   }
 
+  /* Big celebratory chime played once when the whole sorting game ends.
+     Uses the custom asset shipped at `assets game/sucess chime.mp3`. */
+  var SUCCESS_SRC = './assets%20game/sucess%20chime.mp3';
+  var successAudio = null;
+  function playSuccessChime(){
+    try{
+      if(!successAudio){
+        successAudio = new Audio(SUCCESS_SRC);
+        successAudio.preload = 'auto';
+        successAudio.volume = 1.0;
+      }
+      var s = successAudio.cloneNode();
+      s.volume = 1.0;
+      var p = s.play();
+      if(p && p.catch) p.catch(function(){});
+    }catch(e){}
+  }
+
   /* ------------------------------------------------------------------ */
   /*  SFX (WebAudio synth — placeholder until real mp3s are dropped in)  */
   /*  To replace with real audio: swap each sfxX function body to play   */
@@ -578,10 +596,11 @@
   var TOYS = [
     /* CONE shelf — 2 additional items beyond tutorial-placed cap. */
     { png:'tree.png',         shape:'cone',
-      drag:   { w:340, h:340 },
-      /* Tree PNG has heavy transparent padding — bump bounds so the
-         rendered tree visibly matches the other cone-row items. */
-      placed: { x:1240, y:215, w:240, h:240 } },
+      drag:   { w:380, h:380 },
+      /* Tree PNG has heavy transparent padding — bounding box bumped
+         to 320×320 so the visible tree renders at the same scale as
+         the party hat sitting next to it. */
+      placed: { x:1200, y:178, w:320, h:320 } },
     { png:'cone.png',         shape:'cone',
       drag:   { w:300, h:300 },
       placed: { x:1570, y:266, w:207, h:207 } },
@@ -881,7 +900,7 @@
     burstCelebrationConfetti();
 
     /* Cheerful chime to punctuate the moment. */
-    try{ sfxCorrect(); }catch(e){}
+    try{ playSuccessChime(); }catch(e){}
 
     /* Hand control back to the queue (which fades the overlay and
        triggers onComplete → flipbook turns to page 5). Slightly

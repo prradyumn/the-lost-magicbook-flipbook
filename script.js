@@ -4614,7 +4614,8 @@
         './assets%20game/SoccerBall.glb',
         './assets%20game/ToyDrum.glb',
         /* Audio used during tutorials + game */
-        './audio/u_vfd6lcdzng-ting-sound-197759.mp3'
+        './audio/u_vfd6lcdzng-ting-sound-197759.mp3',
+        './assets%20game/sucess%20chime.mp3'
       ];
 
       /* Light up the shape-parade icons as the progress bar crosses
@@ -4744,6 +4745,15 @@
         var parade = document.getElementById('loaderShapes');
         if(barWrap) barWrap.style.display = 'none';
         if(parade) parade.style.display = 'none';
+
+        /* DEV shortcut: if the page was loaded with #dev or #game in the
+           URL, skip the Start button and auto-launch. */
+        var h = (window.location.hash || '').toLowerCase();
+        if(h === '#dev' || h === '#game'){
+          setTimeout(startApp, 50);
+          return;
+        }
+
         if(btn) btn.style.display = 'inline-block';
       }
 
@@ -4756,6 +4766,34 @@
           pl.classList.add('hide');
           setTimeout(function(){ pl.style.display = 'none'; }, 600);
         }
+
+        /* DEV shortcuts via URL hash:
+             #dev   → skip flipbook, run all 4 tutorials + sorting game
+             #game  → skip flipbook AND tutorials, jump straight to game
+           Useful for debugging the game without watching all the videos. */
+        var h = (window.location.hash || '').toLowerCase();
+        if(h === '#dev' || h === '#game'){
+          /* Hide the flipbook UI completely so it doesn't peek through. */
+          var bookScene = document.querySelector('.book-scene');
+          if(bookScene) bookScene.style.display = 'none';
+          var pgCnt = document.getElementById('pgCnt');
+          if(pgCnt) pgCnt.style.display = 'none';
+          var queue = (h === '#game')
+            ? ['game']
+            : ['cube','cone','sphere','cylinder','game'];
+          /* Wait for game.js's startShapeGames to be available, then launch. */
+          (function tryLaunch(){
+            if(typeof window.startShapeGames === 'function'){
+              window.startShapeGames(queue, function(){
+                console.log('[dev] game sequence finished');
+              });
+            } else {
+              setTimeout(tryLaunch, 50);
+            }
+          })();
+          return;
+        }
+
         if(_appCallback) setTimeout(_appCallback, 100);
       }
 
