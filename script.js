@@ -4758,7 +4758,12 @@
       }
 
       function startApp(){
-        /* User clicked â€” now we can play audio */
+        /* User clicked â€” now we can play audio.
+           Run the mobile audio-unlock first, INSIDE the gesture, so
+           every Audio path + the WebAudio context get whitelisted on
+           iOS / Chrome Android. Without this, audio created later
+           (mid-game ting, success chime, SFX) is silently blocked. */
+        try{ if(typeof window.unlockGameAudio === 'function') window.unlockGameAudio(); }catch(e){}
         startMusic();
         /* Hide preloader */
         var pl = document.getElementById('preloader');

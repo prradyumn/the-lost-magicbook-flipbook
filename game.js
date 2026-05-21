@@ -235,6 +235,48 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /*  Mobile audio unlock                                                */
+  /*  Must be called from a real user gesture (first Start click).       */
+  /*  Resumes the WebAudio context AND silently touches every Audio()    */
+  /*  path so the browser whitelists each one for later plays.           */
+  /* ------------------------------------------------------------------ */
+  var _audioUnlocked = false;
+  function unlockAllAudio(){
+    if(_audioUnlocked) return;
+    _audioUnlocked = true;
+
+    /* Resume the WebAudio context that drives our synth SFX. */
+    try{
+      var ctx = _getSfxCtx();
+      if(ctx && ctx.state === 'suspended'){ ctx.resume(); }
+    }catch(e){}
+
+    /* Spawn a throw-away muted Audio() for each file we'll later play.
+       The browser links the gesture to the URL, so subsequent
+       `new Audio(url).play()` calls succeed without re-gesture. */
+    var paths = [
+      './audio/u_vfd6lcdzng-ting-sound-197759.mp3',
+      './assets%20game/sucess%20chime.mp3',
+      './page.mp3',
+      './bg%20music.mp3'
+    ];
+    paths.forEach(function(src){
+      try{
+        var a = new Audio(src);
+        a.muted = true;
+        a.volume = 0;
+        var p = a.play();
+        if(p && p.catch) p.catch(function(){});
+        setTimeout(function(){
+          try{ a.pause(); a.currentTime = 0; }catch(e){}
+        }, 60);
+      }catch(e){}
+    });
+  }
+  /* Expose so script.js can invoke from the Start-button gesture. */
+  window.unlockGameAudio = unlockAllAudio;
+
+  /* ------------------------------------------------------------------ */
   /*  Bootstrap                                                          */
   /* ------------------------------------------------------------------ */
   function init(){
