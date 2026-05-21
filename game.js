@@ -681,6 +681,18 @@
   var gameRound        = 0;
   var gameWrongCount   = 0;
   var gameNudgeTimer   = null;
+  /* Shuffled per-run copy of TOYS. Built each time the sorting game
+     starts so toys appear in a different order every playthrough. */
+  var gameToyOrder     = null;
+
+  /* Fisher-Yates in-place shuffle. */
+  function shuffleArray(arr){
+    for(var i = arr.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr;
+  }
 
   /* Build a single sorting-game round.  */
   function buildGameRound(idx){
@@ -688,11 +700,14 @@
     clearTimeout(gameNudgeTimer);
     gameWrongCount = 0;
 
-    if(idx < 0 || idx >= TOYS.length){
+    /* Use the shuffled order built at game start. Fallback to TOYS
+       if for any reason shuffle wasn't initialized. */
+    var list = gameToyOrder || TOYS;
+    if(idx < 0 || idx >= list.length){
       buildGameCelebration();
       return;
     }
-    var toy = TOYS[idx];
+    var toy = list[idx];
 
     addImg('blur black.png',    'gs-blur');
     addImg('Full cupboard.png', 'gs-cupboard');
@@ -1041,8 +1056,11 @@
     var key = queue.shift();
     if(key === 'game'){
       /* Hand off to the sorting game; its rounds + celebration
-         will call close() (→ playNextShape) when finished. */
+         will call close() (→ playNextShape) when finished.
+         Shuffle the TOYS list so each playthrough has a different
+         toy order (otherwise it's cone→cone→sphere→sphere→…). */
       gameRound = 0;
+      gameToyOrder = shuffleArray(TOYS.slice());
       buildGameRound(0);
       return;
     }
