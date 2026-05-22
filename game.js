@@ -330,6 +330,40 @@
     el.style.height = r.h + 'px';
   }
 
+  /* SVG silhouette used by the drag-screen target outline.
+     Each shape uses a 100x100 viewBox normalized into the placed rect
+     so the outline scales with the toy's footprint. preserveAspectRatio
+     is "none" so rectangular footprints (e.g. cone 133x200) stretch
+     the silhouette to match. */
+  function targetSilhouetteSvg(key){
+    var head = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">';
+    var tail = '</svg>';
+    switch(key){
+      case 'cube':
+        return head +
+          '<rect class="shape" x="12" y="12" width="76" height="76" rx="8" ry="8"/>' +
+          tail;
+      case 'sphere':
+        return head +
+          '<circle class="shape" cx="50" cy="50" r="40"/>' +
+          tail;
+      case 'cone':
+        return head +
+          '<polygon class="shape" points="50,14 86,86 14,86"/>' +
+          tail;
+      case 'cylinder':
+        /* Drum/cylinder silhouette: curved top + bottom edges so the
+           outline reads as a 3D cylinder without poking past the rect. */
+        return head +
+          '<path class="shape" d="M 14 26 Q 50 14 86 26 L 86 74 Q 50 86 14 74 Z"/>' +
+          tail;
+      default:
+        return head +
+          '<rect class="shape" x="12" y="12" width="76" height="76" rx="8"/>' +
+          tail;
+    }
+  }
+
   /* Render all previously-placed shapes statically on the cupboard.
      Skips the current shape (its drag/placed piece is rendered separately
      with its own pop / glow animations). */
@@ -464,9 +498,12 @@
        stays populated as the player progresses. */
     renderPersistentPlacements();
 
-    /* Target highlight */
-    var target = addDiv('gs-target-zone');
-    applyRect(target, currentShape.target);
+    /* Shape-matched dashed outline at the exact landing spot. The
+       full row still acts as the drop hit-zone for forgiveness, but
+       the visual cue is now a silhouette of the shape itself. */
+    var target = addDiv('gs-target-zone gs-target-' + currentShape._key);
+    applyRect(target, currentShape.placed);
+    target.innerHTML = targetSilhouetteSvg(currentShape._key);
 
     /* Top banner + text */
     addImg('Question template.png', 'gs-banner');
@@ -1066,6 +1103,7 @@
     }
     currentShape = SHAPES[key];
     if(!currentShape){ playNextShape(); return; }
+    currentShape._key = key;
     SCREENS = buildScreensForCurrentShape();
     showScreen(0);
   }
