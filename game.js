@@ -492,7 +492,7 @@
     wrongAttempts = 0;
 
     addImg('blur black.png',    'gs-blur');
-    addImg('Full cupboard.png', 'gs-cupboard');
+    addImg('full cupboard.png', 'gs-cupboard');
 
     /* Re-render shapes placed in earlier tutorials so the cupboard
        stays populated as the player progresses. */
@@ -533,7 +533,7 @@
     clearStage();
 
     addImg('blur black.png',    'gs-blur');
-    addImg('Full cupboard.png', 'gs-cupboard');
+    addImg('full cupboard.png', 'gs-cupboard');
 
     /* Render shapes placed in earlier tutorials, then the just-placed
        one on top with its pop-in animation. */
@@ -747,7 +747,7 @@
     var toy = list[idx];
 
     addImg('blur black.png',    'gs-blur');
-    addImg('Full cupboard.png', 'gs-cupboard');
+    addImg('full cupboard.png', 'gs-cupboard');
 
     /* All previously-placed toys (tutorial + earlier rounds) */
     renderPersistentPlacements();
@@ -974,7 +974,7 @@
   function buildGameCelebration(){
     clearStage();
     addImg('blur black.png',    'gs-blur');
-    addImg('Full cupboard.png', 'gs-cupboard');
+    addImg('full cupboard.png', 'gs-cupboard');
     renderPersistentPlacements();
 
     addImg('Question template.png', 'gs-banner');

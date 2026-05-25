@@ -4587,7 +4587,7 @@
         './assets%20game/ChatGPT%20Image%20Dec%2026,%202025,%2001_22_06%20PM%201.png',
         './assets%20game/ChatGPT%20Image%20Dec%2026,%202025,%2001_22_06%20PM%202.png',
         './assets%20game/ChatGPT%20Image%20Dec%2029,%202025,%2001_55_04%20PM%201.png',
-        './assets%20game/Full%20cupboard.png',
+        './assets%20game/full%20cupboard.png',
         './assets%20game/Group%2023.png',
         './assets%20game/Group%20422.png',
         './assets%20game/Question%20template.png',
