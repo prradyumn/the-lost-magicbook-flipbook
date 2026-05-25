@@ -60,7 +60,7 @@
       hero:   { x:787.72, y:444.17, w:391.16, h:586.74 },
       drag:   { x:201.90, y:445.32, w:227.82, h:341.73 },
       /* Figma slide-100 cap (party hat) at (749, 266, 133x200); +260 shift. */
-      placed: { x:1009,   y:266,    w:133,    h:200 },
+      placed: { x:1009,   y:246,    w:133,    h:200 },
       target: { x:616.04, y:238.35, w:1220.45, h:218.55 },    /* top row    */
       nudge:  { x:180.65, y:570.83, dx: 620, dy: -280 },
       dialogues:[
@@ -364,6 +364,47 @@
     }
   }
 
+  /* Mini confetti burst that fires at the exact spot a correct toy is
+     dropped. Particles radiate outward from (cx, cy) in stage-local
+     coords and fade in ~1s. Used by both the tutorial drag screen and
+     the final sorting game's correct-drop branch. */
+  function miniConfettiBurst(cx, cy){
+    if(!stage) return;
+    var box = document.createElement('div');
+    box.className = 'gs-mini-confetti-container';
+    box.style.left = cx + 'px';
+    box.style.top  = cy + 'px';
+    stage.appendChild(box);
+
+    var colors  = ['#FFD93D','#FF6B9D','#6BCBFF','#9ED36A','#FFB347','#C77DFF','#FF5E7E'];
+    var shapes  = ['dot','chip','star','sparkle'];
+    var N       = 22;
+    for(var i = 0; i < N; i++){
+      var p = document.createElement('div');
+      var shapeCls = shapes[Math.floor(Math.random() * shapes.length)];
+      p.className = 'gs-mini-confetti ' + shapeCls;
+
+      /* Even angular spread with a small jitter so particles don't
+         look like a perfect star. Mostly outward + slightly upward. */
+      var angle = (Math.PI * 2 * i / N) + (Math.random() * 0.5 - 0.25);
+      var dist  = 70 + Math.random() * 70;
+      var dx    = Math.cos(angle) * dist;
+      var dy    = Math.sin(angle) * dist - 18; /* bias upward */
+
+      p.style.setProperty('--burst-x', dx.toFixed(1) + 'px');
+      p.style.setProperty('--burst-y', dy.toFixed(1) + 'px');
+      p.style.setProperty('--spin',    (Math.random() * 720 - 360).toFixed(0) + 'deg');
+      p.style.setProperty('--col',     colors[Math.floor(Math.random() * colors.length)]);
+      p.style.setProperty('--delay',   (Math.random() * 0.06).toFixed(2) + 's');
+      p.style.setProperty('--dur',     (0.85 + Math.random() * 0.30).toFixed(2) + 's');
+      box.appendChild(p);
+    }
+
+    setTimeout(function(){
+      if(box.parentNode) box.parentNode.removeChild(box);
+    }, 1400);
+  }
+
   /* Render all previously-placed shapes statically on the cupboard.
      Skips the current shape (its drag/placed piece is rendered separately
      with its own pop / glow animations). */
@@ -615,6 +656,7 @@
         target.style.opacity = '0';
         sfxCorrect();
         var p = currentShape.placed;
+        miniConfettiBurst(p.x + p.w / 2, p.y + p.h / 2);
         piece.style.transition =
           'left .4s cubic-bezier(.34,1.56,.64,1), ' +
           'top .4s cubic-bezier(.34,1.56,.64,1), ' +
@@ -914,6 +956,7 @@
         piece.classList.add('correct-snap');
         sfxCorrect();
         var p = toy.placed;
+        miniConfettiBurst(p.x + p.w / 2, p.y + p.h / 2);
         piece.style.transition =
           'left .45s cubic-bezier(.34,1.56,.64,1), ' +
           'top .45s cubic-bezier(.34,1.56,.64,1), ' +

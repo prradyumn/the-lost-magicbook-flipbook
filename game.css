@@ -595,6 +595,84 @@
   filter: drop-shadow(0 0 10px var(--col)) drop-shadow(0 0 16px var(--col));
 }
 
+/* Mini confetti burst — small localized celebration that fires at the
+   exact spot a correct toy is dropped. The container is positioned
+   inline at the drop center; particles burst outward from (0,0) and
+   fade. Unlike the big celebration confetti, this one is short-lived
+   (~900ms) and stays near the shape so it reads as "this slot — yes!". */
+.gs-mini-confetti-container{
+  position:absolute;
+  width:0;
+  height:0;
+  pointer-events:none;
+  z-index:50;
+}
+.gs-mini-confetti{
+  position:absolute;
+  left:0;
+  top:0;
+  --burst-x: 0px;
+  --burst-y: 0px;
+  --spin:    360deg;
+  --col:     #FFD93D;
+  --delay:   0s;
+  --dur:     .9s;
+  animation: miniBurst var(--dur) var(--delay) cubic-bezier(.22,.7,.36,1) forwards;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.gs-mini-confetti.dot{
+  width:10px; height:10px; border-radius:50%;
+  background: var(--col);
+  box-shadow: 0 0 6px var(--col), 0 0 12px var(--col);
+}
+.gs-mini-confetti.chip{
+  width:8px; height:14px; border-radius:2px;
+  background: var(--col);
+  box-shadow: 0 0 5px var(--col);
+}
+.gs-mini-confetti.star{
+  width:16px; height:16px;
+  background: var(--col);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%,
+                     50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  filter: drop-shadow(0 0 5px var(--col)) drop-shadow(0 0 9px var(--col));
+}
+.gs-mini-confetti.sparkle{
+  width:12px; height:12px;
+  background: var(--col);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%,
+                     50% 100%, 40% 60%, 0 50%, 40% 40%);
+  filter: drop-shadow(0 0 6px var(--col));
+}
+@keyframes miniBurst{
+  0%{
+    transform: translate(-50%, -50%) scale(.2) rotate(0deg);
+    opacity: 0;
+  }
+  15%{
+    opacity: 1;
+    transform:
+      translate(calc(-50% + var(--burst-x) * .35),
+                calc(-50% + var(--burst-y) * .35))
+      scale(1) rotate(calc(var(--spin) * .15));
+  }
+  70%{
+    opacity: .95;
+    transform:
+      translate(calc(-50% + var(--burst-x) * .92),
+                calc(-50% + var(--burst-y) * .92 + 14px))
+      scale(.9) rotate(calc(var(--spin) * .7));
+  }
+  100%{
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--burst-x)),
+                calc(-50% + var(--burst-y) + 32px))
+      scale(.55) rotate(var(--spin));
+  }
+}
+
 /* Red flash on the row a wrong drop landed on. */
 .gs-game-row-flash{
   position:absolute;
