@@ -4558,14 +4558,28 @@
           }
         }, 600);
 
-        /* Click/tap left binding to go to previous page (mouse + touch + pointer) */
+        /* Click/tap left binding to go to previous page (mouse + touch + pointer).
+           Disabled on the first visible page (turn.js page 2) — there is
+           nowhere to go back to, so the gesture should be a no-op. */
         var spineHandled = false;
         $('.book-spine').on('pointerdown mousedown touchstart', function(e){
           if(spineHandled) return;
           spineHandled = true;
           setTimeout(function(){ spineHandled = false; }, 300);
           e.preventDefault();
+          if($('#flipbook').turn('page') <= 2) return;
           $('#flipbook').turn('previous');
+        });
+
+        /* Cancel the corner-peel gesture itself when the user drags the
+           LEFT (backward) corner on the first visible page. Without this
+           turn.js animates a peel that then snaps back when the `turning`
+           handler blocks the navigation — feels broken. Corner strings
+           are 'tl'/'tr'/'bl'/'br'; the second char encodes l(eft)/r(ight). */
+        $('#flipbook').bind('start', function(e, opts, corner){
+          if(corner && corner.charAt(1) === 'l'){
+            if($('#flipbook').turn('page') <= 2){ e.preventDefault(); }
+          }
         });
 
         /* NOTE: turn.js handles right-edge corner peeling natively (click + drag
