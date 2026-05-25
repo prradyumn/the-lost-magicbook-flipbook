@@ -4471,6 +4471,40 @@
         function _setTurnDisabled(disabled){
           try{ $('#flipbook').turn('disable', !!disabled); }catch(e){}
         }
+
+        /* Pre-LBD intro: fade in the overlay, wait for the user to tap
+           "Let's Go", then fade out and invoke onGo(). Returns immediately
+           with onGo() if the overlay/button aren't in the DOM. */
+        function showLbdIntro(onGo){
+          var ovr = document.getElementById('lbdOverlay');
+          var btn = document.getElementById('lbdGoBtn');
+          if(!ovr || !btn){ if(typeof onGo === 'function') onGo(); return; }
+          ovr.classList.add('visible');
+          /* Force reflow so the .show class triggers the fade-in transition. */
+          void ovr.offsetWidth;
+          ovr.classList.add('show');
+          var fired = false;
+          function go(){
+            if(fired) return;
+            fired = true;
+            /* Start the game FIRST while the LBD overlay is still on
+               screen. #gameOverlay sits at z-index 100000 (one above
+               #lbdOverlay at 99999), so as the game fades in it visually
+               covers the LBD without ever revealing the story page
+               underneath. Once the game overlay is fully opaque we
+               silently tear down the LBD — no fade, no flash. */
+            if(typeof onGo === 'function') onGo();
+            setTimeout(function(){
+              ovr.classList.remove('show');
+              ovr.classList.remove('visible');
+            }, 550);
+          }
+          /* pointerdown lets us also unlock game audio on the same gesture. */
+          btn.addEventListener('pointerdown', function(){
+            try{ if(window.unlockGameAudio) window.unlockGameAudio(); }catch(e){}
+            go();
+          }, { once:true });
+        }
         $('#flipbook video').each(function(){
           this.addEventListener('play',  function(){ _setTurnDisabled(true);  });
           this.addEventListener('ended', function(){ _setTurnDisabled(false); });
@@ -4488,10 +4522,15 @@
               var bg = document.getElementById('bgMusic');
               var bgWasPlaying = bg && !bg.paused;
               if(bgWasPlaying){ try{ bg.pause(); }catch(e){} }
-              window.startShapeGames(['cube','cone','sphere','cylinder','game'], function onAllShapesDone(){
-                if(bgWasPlaying){ try{ bg.play(); }catch(e){} }
-                /* Advance the flipbook from page 4 to page 5 */
-                try{ $('#flipbook').turn('next'); }catch(e){}
+              /* Show the pre-LBD intro first; "Let's Go" launches the
+                 tutorial sequence. If the overlay element is missing
+                 (older HTML), we still start the games immediately. */
+              showLbdIntro(function(){
+                window.startShapeGames(['cube','cone','sphere','cylinder','game'], function onAllShapesDone(){
+                  if(bgWasPlaying){ try{ bg.play(); }catch(e){} }
+                  /* Advance the flipbook from page 4 to page 5 */
+                  try{ $('#flipbook').turn('next'); }catch(e){}
+                });
               });
             });
           }
@@ -4602,6 +4641,7 @@
         './assets%20game/ChatGPT%20Image%20Dec%2026,%202025,%2001_22_06%20PM%202.png',
         './assets%20game/ChatGPT%20Image%20Dec%2029,%202025,%2001_55_04%20PM%201.png',
         './assets%20game/full%20cupboard.png',
+        './assets%20game/LBD%20SCREEN.png',
         './assets%20game/Group%2023.png',
         './assets%20game/Group%20422.png',
         './assets%20game/Question%20template.png',

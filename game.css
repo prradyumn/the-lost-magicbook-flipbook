@@ -325,6 +325,7 @@
 .gs-cube-drag.dragging{ cursor:grabbing; }
 .gs-cube-drag img{
   width:100%;height:100%;object-fit:contain;
+  object-position:center bottom;
   user-select:none;-webkit-user-drag:none;pointer-events:none;
 }
 
@@ -376,6 +377,7 @@
 }
 .gs-cube-placed img,
 .gs-cube-placed model-viewer{ width:100%;height:100%; }
+.gs-cube-placed img{ object-fit:contain; object-position:center bottom; }
 
 /* Shapes placed in earlier tutorials — rendered statically on every
    subsequent screen so the cupboard accumulates as the player progresses. */
@@ -387,6 +389,7 @@
 }
 .gs-placed-static img{
   width:100%;height:100%;object-fit:contain;
+  object-position:center bottom;
   user-select:none;-webkit-user-drag:none;
 }
 @keyframes placedPop{
@@ -427,28 +430,18 @@
    Final sorting-game styles
    ===================================================================== */
 
-/* Cyan-blue rounded spawn box on the left of the cupboard. Background
-   kept light + low-opacity so the golden glow on the game piece sitting
-   inside is clearly visible. */
+/* Spawn box panel — renders the Group 23.png artwork (cyan glassy
+   frame). Only positioning + a soft outer glow live in CSS so the PNG
+   itself defines the border and translucent fill. */
 .gs-spawn-box{
   position:absolute;
-  background: rgba(190, 235, 255, 0.22);
-  border: 6px solid rgba(120, 200, 255, 0.90);
-  border-radius: 40px;
-  box-shadow:
-    0 0 14px rgba(140, 220, 255, 0.35),
-    inset 0 0 14px rgba(255, 255, 255, 0.18);
   z-index: 7;
   pointer-events: none;
   animation: spawnBoxGlow 2.2s ease-in-out infinite;
 }
 @keyframes spawnBoxGlow{
-  0%,100% { box-shadow:
-      0 0 10px rgba(140,220,255,.30),
-      inset 0 0 10px rgba(255,255,255,.15); }
-  50%     { box-shadow:
-      0 0 20px rgba(140,220,255,.55),
-      inset 0 0 16px rgba(255,255,255,.25); }
+  0%,100% { filter: drop-shadow(0 0 10px rgba(140,220,255,.30)); }
+  50%     { filter: drop-shadow(0 0 20px rgba(140,220,255,.55)); }
 }
 
 /* Game piece — inherits .gs-cube-drag positioning + golden glow.
@@ -687,4 +680,93 @@
   0%   { opacity: 0; transform: scale(.97); }
   20%  { opacity: 1; transform: scale(1);   }
   100% { opacity: 0; transform: scale(1);   }
+}
+
+/* =====================================================================
+   Pre-LBD intro screen
+   Shown right before the tutorial sequence. Full-viewport background
+   art with a CSS "Let's Go" button anchored to the bottom-right.
+   ===================================================================== */
+#lbdOverlay{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  background:
+    #1a0633
+    url('./assets%20game/LBD%20SCREEN.png')
+    center center / cover no-repeat;
+  display:none;
+  opacity:0;
+  transition:opacity .4s ease;
+  /* Block accidental text-select / image-drag like the game overlay. */
+  -webkit-user-select:none;
+     -moz-user-select:none;
+      -ms-user-select:none;
+          user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+#lbdOverlay.visible{ display:block; }
+#lbdOverlay.show{ opacity:1; }
+
+/* Pill-shaped "Let's Go" button — pure CSS replica of the asset:
+   sky→deep-blue vertical gradient, white border, inset highlights for
+   the glassy curvature, and a layered drop shadow for the lift. */
+.lbd-go-btn{
+  position:absolute;
+  right:4.5vw;
+  bottom:6vh;
+  padding:18px 56px;
+  font-family:'Fredoka One','Nunito',sans-serif;
+  font-size:clamp(28px, 4.2vw, 56px);
+  font-weight:700;
+  line-height:1;
+  letter-spacing:1px;
+  color:#ffffff;
+  background:linear-gradient(180deg, #6FD4FF 0%, #2EA9E8 48%, #157AB8 100%);
+  border:4px solid #ffffff;
+  border-radius:999px;
+  cursor:pointer;
+  outline:none;
+  box-shadow:
+    inset 0 8px 14px rgba(255,255,255,.45),
+    inset 0 -8px 16px rgba(0, 70,130,.55),
+    0 10px 22px rgba(0, 70,130,.45),
+    0 3px 6px rgba(0,0,0,.22);
+  text-shadow:
+    0 3px 0 rgba(0, 70,130,.55),
+    0 4px 10px rgba(0,0,0,.25);
+  animation:lbdGoPulse 1.5s ease-in-out infinite;
+  transition:transform .12s ease, filter .12s ease;
+  z-index:2;
+}
+.lbd-go-btn:hover  { filter:brightness(1.06); }
+.lbd-go-btn:active { transform:scale(.96); }
+.lbd-go-btn-label{
+  display:inline-block;
+  /* Inner span keeps the pulse animation on the button itself and
+     leaves room for any future icon next to the label. */
+}
+
+/* Pulse: gentle scale breath + expanding cyan halo ring that fades.
+   Two effects on the same element using a single keyframe — the box-
+   shadow's last layer is the ring that grows from 0 to 18px and back. */
+@keyframes lbdGoPulse{
+  0%, 100%{
+    transform:scale(1);
+    box-shadow:
+      inset 0 8px 14px rgba(255,255,255,.45),
+      inset 0 -8px 16px rgba(0, 70,130,.55),
+      0 10px 22px rgba(0, 70,130,.45),
+      0 3px 6px rgba(0,0,0,.22),
+      0 0 0 0 rgba(110,210,255,.65);
+  }
+  50%{
+    transform:scale(1.06);
+    box-shadow:
+      inset 0 8px 14px rgba(255,255,255,.45),
+      inset 0 -8px 16px rgba(0, 70,130,.55),
+      0 14px 28px rgba(0, 70,130,.50),
+      0 3px 6px rgba(0,0,0,.22),
+      0 0 0 18px rgba(110,210,255,0);
+  }
 }

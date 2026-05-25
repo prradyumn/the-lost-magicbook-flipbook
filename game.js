@@ -417,7 +417,7 @@
       img.src = resolveAsset(p.png);
       img.draggable = false;
       img.alt = '';
-      img.style.cssText = 'width:100%;height:100%;object-fit:contain;user-select:none;pointer-events:none;';
+      img.style.cssText = 'width:100%;height:100%;object-fit:contain;object-position:center bottom;user-select:none;pointer-events:none;';
       el.appendChild(img);
     }
   }
@@ -459,6 +459,7 @@
       img.alt = '';
       img.style.cssText =
         'width:100%;height:100%;object-fit:contain;' +
+        'object-position:center bottom;' +
         'user-select:none;-webkit-user-drag:none;pointer-events:none;';
       return img;
     }
@@ -718,10 +719,12 @@
     /* CONE shelf — 2 additional items beyond tutorial-placed cap. */
     { png:'tree.png',         shape:'cone',
       drag:   { w:380, h:380 },
-      /* Tree PNG has heavy transparent padding — bounding box bumped
-         to 320×320 so the visible tree renders at the same scale as
-         the party hat sitting next to it. */
-      placed: { x:1200, y:178, w:320, h:320 } },
+      /* Tree PNG has heavy transparent padding — bounding box kept at
+         320×320 so the visible tree renders at the same scale as the
+         party hat. y anchored so the box bottom (446) matches the hat's
+         box bottom; with object-position: center bottom the visible
+         tree base sits on the shelf line instead of floating. */
+      placed: { x:1200, y:126, w:320, h:320 } },
     { png:'cone.png',         shape:'cone',
       drag:   { w:300, h:300 },
       placed: { x:1570, y:266, w:207, h:207 } },
@@ -742,9 +745,12 @@
     /* CUBE shelf — 2 additional items beyond tutorial-placed block. */
     { png:'dice.png',         shape:'cube',
       drag:   { w:340, h:340 },
-      /* Dice PNG has padding too — boost bounds so the visible dice
-         lines up with the block / rubic on the same shelf. */
-      placed: { x:1290, y:850, w:200, h:200 } },
+      /* Dice PNG has VERY heavy transparent padding. With object-position:
+         center bottom on the placed image, the visible dice anchors to
+         the bottom of this box — so the box bottom is set to match the
+         Rubik's-cube visible bottom (≈1028) and the visible dice sits
+         on the shelf instead of floating in the middle of the row. */
+      placed: { x:1190, y:628, w:400, h:400 } },
     { png:'rubic.png',        shape:'cube',
       drag:   { w:300, h:300 },
       placed: { x:1598, y:899, w:129, h:129 } }
@@ -800,8 +806,10 @@
     bt.id = 'gs-game-banner-text';
     bt.textContent = 'Drag this toy to the correct shelf.';
 
-    /* Spawn box at the fixed Figma position (118.81, 422) × 397×397. */
-    var box = addDiv('gs-spawn-box');
+    /* Spawn box at the fixed Figma position (118.81, 422) × 397×397.
+       Uses the Group 23.png artwork (same panel as the tutorial drag
+       screen) so the cyan frame style is consistent across both phases. */
+    var box = addImg('Group 23.png', 'gs-spawn-box');
     box.style.left   = SPAWN_BOX_X + 'px';
     box.style.top    = SPAWN_BOX_Y + 'px';
     box.style.width  = SPAWN_BOX_W + 'px';
@@ -821,6 +829,7 @@
     img.draggable = false;
     img.alt = '';
     img.style.cssText = 'width:100%;height:100%;object-fit:contain;' +
+                        'object-position:center bottom;' +
                         'user-select:none;-webkit-user-drag:none;pointer-events:none;';
     piece.appendChild(img);
 
