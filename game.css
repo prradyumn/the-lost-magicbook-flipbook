@@ -869,22 +869,6 @@
   100% { transform:translateY(-110vh) translateX(var(--xshift, 0px)); opacity:0; }
 }
 
-/* Soft elliptical drop shadow under placed toys. */
-.gs-placed-static::after,
-.gs-cube-placed::after{
-  content:'';
-  position:absolute;
-  left:18%; right:18%;
-  bottom:-4px;
-  height:16px;
-  background:radial-gradient(ellipse at center,
-    rgba(0,0,0,.36) 0%,
-    rgba(0,0,0,.14) 50%,
-    transparent 80%);
-  pointer-events:none;
-  z-index:-1;
-}
-
 /* Magnetic snap: silhouette brightens + pulses when the dragged piece
    is near the correct drop zone. The .near class is toggled by JS
    during pointermove based on cursor-to-target distance. */
