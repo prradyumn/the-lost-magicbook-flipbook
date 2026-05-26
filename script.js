@@ -4799,14 +4799,6 @@
         if(barWrap) barWrap.style.display = 'none';
         if(parade) parade.style.display = 'none';
 
-        /* DEV shortcut: if the page was loaded with #dev or #game in the
-           URL, skip the Start button and auto-launch. */
-        var h = (window.location.hash || '').toLowerCase();
-        if(h === '#dev' || h === '#game'){
-          setTimeout(startApp, 50);
-          return;
-        }
-
         if(btn) btn.style.display = 'inline-block';
       }
 
@@ -4823,69 +4815,6 @@
         if(pl){
           pl.classList.add('hide');
           setTimeout(function(){ pl.style.display = 'none'; }, 600);
-        }
-
-        /* DEV shortcuts via URL hash. The dev panel sets the hash then
-           reloads, re-entering this branch on the matching mode.
-             #dev      → all 4 tutorials + sorting game
-             #game     → sorting game only
-             #cube     → cube tutorial only
-             #cone     → cone tutorial only
-             #sphere   → sphere tutorial only
-             #cylinder → cylinder tutorial only
-             #lbd      → pre-LBD intro screen; "Let's Go" runs all tutorials
-             #story    → no skip — play the flipbook normally */
-        var h = (window.location.hash || '').toLowerCase();
-        var devModes = {
-          '#dev':      ['cube','cone','sphere','cylinder','game'],
-          '#game':     ['game'],
-          '#cube':     ['cube'],
-          '#cone':     ['cone'],
-          '#sphere':   ['sphere'],
-          '#cylinder': ['cylinder']
-        };
-        if(devModes[h] || h === '#lbd'){
-          /* Hide the flipbook UI completely so it doesn't peek through. */
-          var bookScene = document.querySelector('.book-scene');
-          if(bookScene) bookScene.style.display = 'none';
-          var pgCnt = document.getElementById('pgCnt');
-          if(pgCnt) pgCnt.style.display = 'none';
-
-          function _launchGames(queue){
-            (function tryLaunch(){
-              if(typeof window.startShapeGames === 'function'){
-                window.startShapeGames(queue, function(){
-                  console.log('[dev] game sequence finished');
-                });
-              } else {
-                setTimeout(tryLaunch, 50);
-              }
-            })();
-          }
-
-          if(h === '#lbd'){
-            /* Show LBD intro standalone. Tapping "Let's Go" runs the
-               full tutorial sequence (same as the production flow). */
-            var ovr = document.getElementById('lbdOverlay');
-            var btn = document.getElementById('lbdGoBtn');
-            if(ovr){
-              ovr.classList.add('visible');
-              void ovr.offsetWidth;
-              ovr.classList.add('show');
-            }
-            if(btn){
-              btn.addEventListener('pointerdown', function(){
-                try{ if(window.unlockGameAudio) window.unlockGameAudio(); }catch(e){}
-                _launchGames(['cube','cone','sphere','cylinder','game']);
-                setTimeout(function(){
-                  if(ovr){ ovr.classList.remove('show'); ovr.classList.remove('visible'); }
-                }, 550);
-              }, { once:true });
-            }
-          } else {
-            _launchGames(devModes[h]);
-          }
-          return;
         }
 
         if(_appCallback) setTimeout(_appCallback, 100);
