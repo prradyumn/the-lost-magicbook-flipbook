@@ -60,7 +60,7 @@
       hero:   { x:787.72, y:444.17, w:391.16, h:586.74 },
       drag:   { x:201.90, y:445.32, w:227.82, h:341.73 },
       /* Figma slide-100 cap (party hat) at (749, 266, 133x200); +260 shift. */
-      placed: { x:1009,   y:246,    w:133,    h:200 },
+      placed: { x:1009,   y:266,    w:133,    h:200 },
       target: { x:616.04, y:238.35, w:1220.45, h:218.55 },    /* top row    */
       nudge:  { x:180.65, y:570.83, dx: 620, dy: -280 },
       dialogues:[
@@ -733,7 +733,7 @@
          is a no-op here — the visible position is driven entirely by y
          and h. y:200 lines the visible base up with the shelf; raise to
          lower y to shift the tree UP, or push h smaller to shrink it. */
-      placed: { x:1200, y:200, w:320, h:320 } },
+      placed: { x:1200, y:220, w:320, h:320 } },
     { png:'cone.png',         shape:'cone',
       drag:   { w:300, h:300 },
       placed: { x:1570, y:266, w:207, h:207 } },
