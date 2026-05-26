@@ -745,12 +745,13 @@
     /* CUBE shelf — 2 additional items beyond tutorial-placed block. */
     { png:'dice.png',         shape:'cube',
       drag:   { w:340, h:340 },
-      /* Dice PNG has VERY heavy transparent padding. With object-position:
-         center bottom on the placed image, the visible dice anchors to
-         the bottom of this box — so the box bottom is set to match the
-         Rubik's-cube visible bottom (≈1028) and the visible dice sits
-         on the shelf instead of floating in the middle of the row. */
-      placed: { x:1190, y:628, w:400, h:400 } },
+      /* Dice PNG has heavy transparent padding but is roughly square,
+         so it fills its box and object-position is a no-op. Box shrunk
+         from 400 → 340 (still bigger than the ABC-block neighbour) and
+         pushed down to y:820 so the visible die sits on the cube shelf
+         next to the Rubik's cube. Bigger h pushes visible content past
+         the cupboard floor; smaller h shrinks the die overall. */
+      placed: { x:1210, y:820, w:340, h:340 } },
     { png:'rubic.png',        shape:'cube',
       drag:   { w:300, h:300 },
       placed: { x:1598, y:899, w:129, h:129 } }
