@@ -835,3 +835,112 @@
   }
 }
 
+/* =====================================================================
+   FANCY MODE — opt-in visual polish layer.
+   Activated only when JS adds `.fancy` to #gameOverlay (controlled
+   from dev.html's toggle, persisted in localStorage). Every selector
+   here is scoped under `.fancy` so default production is unchanged.
+   ===================================================================== */
+
+/* #1 — Floating ambient dust motes (full-viewport, behind the stage). */
+.gs-bg-motes{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+  z-index:0;
+}
+.gs-bg-motes .mote{
+  position:absolute;
+  bottom:-12px;
+  width:5px; height:5px;
+  border-radius:50%;
+  background:radial-gradient(circle,
+    rgba(255,248,210,.95) 0%,
+    rgba(255,232,160,.45) 50%,
+    transparent 80%);
+  filter:blur(.4px);
+  opacity:0;
+  animation:moteFloat var(--dur, 14s) linear infinite;
+  animation-delay:var(--delay, 0s);
+}
+@keyframes moteFloat{
+  0%   { transform:translateY(0)      translateX(0);                  opacity:0; }
+  10%  {                                                              opacity:.85; }
+  90%  {                                                              opacity:.85; }
+  100% { transform:translateY(-110vh) translateX(var(--xshift, 0px)); opacity:0; }
+}
+
+/* #3 — Soft elliptical drop shadow under placed toys.
+   Renders below the toy via a pseudo-element so no asset edits. */
+#gameOverlay.fancy .gs-placed-static,
+#gameOverlay.fancy .gs-cube-placed{
+  /* Make positioning context for the ::after shadow. */
+  position:absolute;
+}
+#gameOverlay.fancy .gs-placed-static::after,
+#gameOverlay.fancy .gs-cube-placed::after{
+  content:'';
+  position:absolute;
+  left:18%; right:18%;
+  bottom:-4px;
+  height:16px;
+  background:radial-gradient(ellipse at center,
+    rgba(0,0,0,.36) 0%,
+    rgba(0,0,0,.14) 50%,
+    transparent 80%);
+  pointer-events:none;
+  z-index:-1;
+}
+
+/* #4 — Magnetic snap: silhouette brightens + pulses when the dragged
+   piece is near the correct drop zone. The .near class is toggled by
+   JS during pointermove based on cursor-to-target distance. */
+#gameOverlay.fancy .gs-target-zone.near svg .shape{
+  fill: rgba(60, 140, 230, .30);
+  stroke: rgba(120, 200, 255, 1);
+  stroke-width: 5;
+  stroke-dasharray: 12 6;
+  filter:
+    drop-shadow(0 0 14px rgba(120, 200, 255, .85))
+    drop-shadow(0 0 28px rgba(120, 200, 255, .55));
+  animation: targetNearPulse .6s ease-in-out infinite;
+}
+@keyframes targetNearPulse{
+  0%, 100% { stroke-opacity: .80; }
+  50%      { stroke-opacity: 1;   }
+}
+
+/* #5 — Cinematic vignette over the whole game stage. */
+#gameOverlay.fancy::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:9999;
+  background:radial-gradient(ellipse at center,
+    transparent 50%,
+    rgba(0,0,0,.20) 75%,
+    rgba(0,0,0,.55) 100%);
+}
+
+/* #7 — Tiny sparkle particles that follow the dragging cursor.
+   Spawned via JS in setupDrag's onMove handler. */
+.gs-cursor-spark{
+  position:absolute;
+  width:12px; height:12px;
+  pointer-events:none;
+  border-radius:50%;
+  background:radial-gradient(circle,
+    rgba(255,245,180,1)   0%,
+    rgba(255,215,100,.55) 45%,
+    transparent           80%);
+  filter:drop-shadow(0 0 6px rgba(255,225,130,.95));
+  opacity:0;
+  animation:cursorSparkFade 700ms ease-out forwards;
+}
+@keyframes cursorSparkFade{
+  0%   { transform:scale(.35); opacity:0; }
+  15%  { transform:scale(1.1); opacity:1; }
+  100% { transform:scale(.25); opacity:0; }
+}

@@ -51,12 +51,29 @@
       color: rgba(120, 200, 255, .80);
       text-transform: uppercase;
     }
+    .status{
+      display: inline-block;
+      margin-left: 8px;
+      padding: 1px 8px;
+      border-radius: 999px;
+      font-size: 9px;
+      letter-spacing: 1px;
+      vertical-align: middle;
+      background: rgba(120, 200, 255, .12);
+      color: rgba(180, 220, 255, .65);
+      border: 1px solid rgba(120, 200, 255, .25);
+    }
+    .status.on{
+      background: rgba(110, 240, 160, .18);
+      color: rgba(150, 255, 190, .95);
+      border-color: rgba(110, 240, 160, .55);
+    }
     .grid{
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
     }
-    a.btn{
+    .btn{
       display: block;
       text-decoration: none;
       background: rgba(45, 55, 80, .9);
@@ -67,22 +84,25 @@
       font-size: 13px;
       font-weight: 500;
       text-align: center;
+      font-family: inherit;
+      cursor: pointer;
+      width: 100%;
       transition: background .15s, border-color .15s, transform .08s;
     }
-    a.btn:hover{
+    .btn:hover{
       background: rgba(60, 110, 170, .9);
       border-color: rgba(140, 220, 255, .55);
     }
-    a.btn:active{ transform: translateY(1px); }
-    a.btn.primary{
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
       background: linear-gradient(180deg, #4AA8E8 0%, #2C7DC0 100%);
       border-color: rgba(140, 220, 255, .55);
       font-weight: 600;
     }
-    a.btn.primary:hover{
+    .btn.primary:hover{
       background: linear-gradient(180deg, #62B8F4 0%, #3A8DD0 100%);
     }
-    a.btn.full{ grid-column: 1 / -1; }
+    .btn.full{ grid-column: 1 / -1; }
     .note{
       margin: 14px 0 0;
       font-size: 11px;
@@ -129,11 +149,42 @@
       </div>
     </div>
 
+    <div class="section">
+      <h2>Fancy mode <span id="fancyStatus" class="status">off</span></h2>
+      <div class="grid">
+        <button class="btn" id="fancyOn"  type="button">Enable fancy mode</button>
+        <button class="btn" id="fancyOff" type="button">Disable fancy mode</button>
+      </div>
+      <p class="note" style="margin-top:8px;">
+        Toggles ambient dust motes, toy shadows, magnetic-snap glow,
+        vignette and cursor sparkles. State persists in localStorage;
+        production users never see them unless they enable it themselves.
+      </p>
+    </div>
+
     <p class="note">
       Tip: middle-click any button to open in a new tab. The hash routes
       are also typeable directly &mdash;
       <code>index.html#cube</code>, <code>#dev</code>, etc.
     </p>
+  <script>
+    (function(){
+      var KEY = 'ebk_fancy_mode';
+      var status = document.getElementById('fancyStatus');
+      function refresh(){
+        var on = localStorage.getItem(KEY) === '1';
+        status.textContent = on ? 'ON' : 'off';
+        status.className = 'status ' + (on ? 'on' : 'off');
+      }
+      document.getElementById('fancyOn').addEventListener('click', function(){
+        localStorage.setItem(KEY, '1'); refresh();
+      });
+      document.getElementById('fancyOff').addEventListener('click', function(){
+        localStorage.removeItem(KEY); refresh();
+      });
+      refresh();
+    })();
+  </script>
   </div>
 </body>
 </html>

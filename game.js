@@ -330,6 +330,48 @@
     el.style.height = r.h + 'px';
   }
 
+  /* -------- FANCY MODE (opt-in visual polish layer) -------- */
+  function isFancyMode(){
+    try { return localStorage.getItem('ebk_fancy_mode') === '1'; }
+    catch(e){ return false; }
+  }
+
+  /* Adds .fancy to #gameOverlay and seeds dust motes once. Safe to
+     call repeatedly — early-returns if motes already exist. */
+  function ensureFancyBackground(){
+    if(!isFancyMode() || !overlay) return;
+    overlay.classList.add('fancy');
+    if(overlay.querySelector('.gs-bg-motes')) return;
+    var motes = document.createElement('div');
+    motes.className = 'gs-bg-motes';
+    for(var i = 0; i < 24; i++){
+      var m = document.createElement('div');
+      m.className = 'mote';
+      m.style.left = (Math.random() * 100) + '%';
+      m.style.setProperty('--dur',    (12 + Math.random() * 10).toFixed(1) + 's');
+      m.style.setProperty('--delay',  (Math.random() * 14).toFixed(1) + 's');
+      m.style.setProperty('--xshift', ((Math.random() * 240) - 120).toFixed(0) + 'px');
+      motes.appendChild(m);
+    }
+    overlay.insertBefore(motes, overlay.firstChild);
+  }
+
+  /* Throttled sparkle spawn at a stage-local point. Used by setupDrag's
+     pointermove to leave a faint magical trail. */
+  var _lastSparkT = 0;
+  function spawnCursorSpark(x, y){
+    if(!isFancyMode() || !stage) return;
+    var now = (window.performance && performance.now) ? performance.now() : Date.now();
+    if(now - _lastSparkT < 45) return;
+    _lastSparkT = now;
+    var s = document.createElement('div');
+    s.className = 'gs-cursor-spark';
+    s.style.left = (x - 6 + (Math.random()*10 - 5)) + 'px';
+    s.style.top  = (y - 6 + (Math.random()*10 - 5)) + 'px';
+    stage.appendChild(s);
+    setTimeout(function(){ if(s.parentNode) s.parentNode.removeChild(s); }, 720);
+  }
+
   /* SVG silhouette used by the drag-screen target outline.
      Each shape uses a 100x100 viewBox normalized into the placed rect
      so the outline scales with the toy's footprint. preserveAspectRatio
@@ -644,6 +686,19 @@
       var p = toStage(e.clientX, e.clientY);
       piece.style.left = (p.x - offX) + 'px';
       piece.style.top  = (p.y - offY) + 'px';
+
+      /* FANCY: sparkle trail + magnetic-snap silhouette glow.
+         Both are no-ops when fancy mode is off (default in prod). */
+      if(isFancyMode()){
+        spawnCursorSpark(p.x, p.y);
+        if(target && currentShape && currentShape.target){
+          var t = currentShape.target;
+          var dx = Math.max(0, Math.max(t.x - p.x, p.x - (t.x + t.w)));
+          var dy = Math.max(0, Math.max(t.y - p.y, p.y - (t.y + t.h)));
+          if(Math.sqrt(dx*dx + dy*dy) < 80) target.classList.add('near');
+          else                              target.classList.remove('near');
+        }
+      }
     }
 
     function onUp(){
@@ -955,6 +1010,9 @@
       var p = toStage(e.clientX, e.clientY);
       piece.style.left = (p.x - offX) + 'px';
       piece.style.top  = (p.y - offY) + 'px';
+
+      /* FANCY: sparkle trail (sorting game has no silhouette so no snap). */
+      if(isFancyMode()) spawnCursorSpark(p.x, p.y);
     }
 
     function onUp(){
@@ -1180,6 +1238,7 @@
     overlay.classList.add('visible');
     void overlay.offsetWidth;
     overlay.classList.add('show');
+    ensureFancyBackground();
     playNextShape();
   }
 
