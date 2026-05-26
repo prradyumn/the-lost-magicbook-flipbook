@@ -4654,7 +4654,6 @@
         './assets%20game/bucket.png',
         './assets%20game/cone.png',
         './assets%20game/dice.png',
-        './assets%20game/glow.png',
         './assets%20game/image%20(18).png',
         './assets%20game/jar.png',
         './assets%20game/rubic.png',
@@ -4826,30 +4825,66 @@
           setTimeout(function(){ pl.style.display = 'none'; }, 600);
         }
 
-        /* DEV shortcuts via URL hash:
-             #dev   → skip flipbook, run all 4 tutorials + sorting game
-             #game  → skip flipbook AND tutorials, jump straight to game
-           Useful for debugging the game without watching all the videos. */
+        /* DEV shortcuts via URL hash. The dev panel sets the hash then
+           reloads, re-entering this branch on the matching mode.
+             #dev      → all 4 tutorials + sorting game
+             #game     → sorting game only
+             #cube     → cube tutorial only
+             #cone     → cone tutorial only
+             #sphere   → sphere tutorial only
+             #cylinder → cylinder tutorial only
+             #lbd      → pre-LBD intro screen; "Let's Go" runs all tutorials
+             #story    → no skip — play the flipbook normally */
         var h = (window.location.hash || '').toLowerCase();
-        if(h === '#dev' || h === '#game'){
+        var devModes = {
+          '#dev':      ['cube','cone','sphere','cylinder','game'],
+          '#game':     ['game'],
+          '#cube':     ['cube'],
+          '#cone':     ['cone'],
+          '#sphere':   ['sphere'],
+          '#cylinder': ['cylinder']
+        };
+        if(devModes[h] || h === '#lbd'){
           /* Hide the flipbook UI completely so it doesn't peek through. */
           var bookScene = document.querySelector('.book-scene');
           if(bookScene) bookScene.style.display = 'none';
           var pgCnt = document.getElementById('pgCnt');
           if(pgCnt) pgCnt.style.display = 'none';
-          var queue = (h === '#game')
-            ? ['game']
-            : ['cube','cone','sphere','cylinder','game'];
-          /* Wait for game.js's startShapeGames to be available, then launch. */
-          (function tryLaunch(){
-            if(typeof window.startShapeGames === 'function'){
-              window.startShapeGames(queue, function(){
-                console.log('[dev] game sequence finished');
-              });
-            } else {
-              setTimeout(tryLaunch, 50);
+
+          function _launchGames(queue){
+            (function tryLaunch(){
+              if(typeof window.startShapeGames === 'function'){
+                window.startShapeGames(queue, function(){
+                  console.log('[dev] game sequence finished');
+                });
+              } else {
+                setTimeout(tryLaunch, 50);
+              }
+            })();
+          }
+
+          if(h === '#lbd'){
+            /* Show LBD intro standalone. Tapping "Let's Go" runs the
+               full tutorial sequence (same as the production flow). */
+            var ovr = document.getElementById('lbdOverlay');
+            var btn = document.getElementById('lbdGoBtn');
+            if(ovr){
+              ovr.classList.add('visible');
+              void ovr.offsetWidth;
+              ovr.classList.add('show');
             }
-          })();
+            if(btn){
+              btn.addEventListener('pointerdown', function(){
+                try{ if(window.unlockGameAudio) window.unlockGameAudio(); }catch(e){}
+                _launchGames(['cube','cone','sphere','cylinder','game']);
+                setTimeout(function(){
+                  if(ovr){ ovr.classList.remove('show'); ovr.classList.remove('visible'); }
+                }, 550);
+              }, { once:true });
+            }
+          } else {
+            _launchGames(devModes[h]);
+          }
           return;
         }
 

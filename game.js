@@ -478,9 +478,19 @@
     clearStage();
 
     addImg('blur black.png', 'gs-blur');
-    /* Decorative spotlight halo behind the hero shape — exact Figma
-       asset + position. */
-    addImg('glow.png', 'gs-spotlight');
+    /* Spotlight halo — CSS radial gradient that breathes (no PNG).
+       Tighter and lighter than the old glow.png so the room art behind
+       it still shows through. */
+    addDiv('gs-spotlight');
+    /* Twinkling sparkle layer that orbits the hero shape — 7 stars
+       on staggered delays for an async shimmer. */
+    var sparkles = addDiv('gs-sparkles');
+    var sparkClasses = ['s1','s2','s3','s4 small','s5','s6 small','s7'];
+    for(var si = 0; si < sparkClasses.length; si++){
+      var spark = document.createElement('div');
+      spark.className = 'spark ' + sparkClasses[si];
+      sparkles.appendChild(spark);
+    }
     addImg('ChatGPT Image Dec 26, 2025, 01_22_06 PM 1.png', 'gs-boy');
     addImg('ChatGPT Image Dec 26, 2025, 01_22_06 PM 2.png', 'gs-girl');
 
@@ -719,12 +729,11 @@
     /* CONE shelf — 2 additional items beyond tutorial-placed cap. */
     { png:'tree.png',         shape:'cone',
       drag:   { w:380, h:380 },
-      /* Tree PNG has heavy transparent padding — bounding box kept at
-         320×320 so the visible tree renders at the same scale as the
-         party hat. y anchored so the box bottom (446) matches the hat's
-         box bottom; with object-position: center bottom the visible
-         tree base sits on the shelf line instead of floating. */
-      placed: { x:1200, y:126, w:320, h:320 } },
+      /* Tree PNG is roughly square and fills its box, so object-position
+         is a no-op here — the visible position is driven entirely by y
+         and h. y:200 lines the visible base up with the shelf; raise to
+         lower y to shift the tree UP, or push h smaller to shrink it. */
+      placed: { x:1200, y:200, w:320, h:320 } },
     { png:'cone.png',         shape:'cone',
       drag:   { w:300, h:300 },
       placed: { x:1570, y:266, w:207, h:207 } },
@@ -748,7 +757,7 @@
       /* Dice PNG has heavy transparent padding but is roughly square,
          so it fills its box and object-position is a no-op. Box shrunk
          from 400 → 340 (still bigger than the ABC-block neighbour) and
-         pushed down to y:820 so the visible die sits on the cube shelf
+         pushed down to y:780 so the visible die sits on the cube shelf
          next to the Rubik's cube. Bigger h pushes visible content past
          the cupboard floor; smaller h shrinks the die overall. */
       placed: { x:1210, y:820, w:340, h:340 } },
