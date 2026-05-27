@@ -348,12 +348,29 @@
     overlay.insertBefore(motes, overlay.firstChild);
   }
 
-  /* Throttled sparkle spawn at a stage-local point. Used by setupDrag's
-     pointermove to leave a faint magical trail. */
+  /* Cursor trail particles. Two layers spawned at different rates so
+     the drag looks like a glowing arc with sparkles inside:
+       - .gs-cursor-glow:  wider soft white-blue blobs (every ~70 ms)
+       - .gs-cursor-spark: small yellow sparkles      (every ~45 ms)
+     Used by setupDrag's pointermove. */
   var _lastSparkT = 0;
+  var _lastGlowT  = 0;
   function spawnCursorSpark(x, y){
     if(!stage) return;
     var now = (window.performance && performance.now) ? performance.now() : Date.now();
+
+    /* Soft white-blue glow blob — slower rate, larger. */
+    if(now - _lastGlowT >= 70){
+      _lastGlowT = now;
+      var g = document.createElement('div');
+      g.className = 'gs-cursor-glow';
+      g.style.left = (x - 21) + 'px';
+      g.style.top  = (y - 21) + 'px';
+      stage.appendChild(g);
+      setTimeout(function(){ if(g.parentNode) g.parentNode.removeChild(g); }, 970);
+    }
+
+    /* Tiny yellow sparkle — higher rate, small, jittered. */
     if(now - _lastSparkT < 45) return;
     _lastSparkT = now;
     var s = document.createElement('div');
@@ -1076,10 +1093,15 @@
     if(bt) bt.textContent = text;
   }
 
+  /* Tracks the celebration's auto-close so a "Play again" tap can
+     cancel it and restart instead of advancing to the flipbook. */
+  var _celebCloseTimer = null;
+
   /* Final celebration after the last round. Camera pulls back from a
      tight shot on the cube shelf to the full cupboard while a magical
-     confetti burst rains down. Hold for ~2 s of "admire the result",
-     then hand off to the flipbook. */
+     confetti burst rains down. A "Play again" button pops in after
+     the camera settles; if the user doesn't click it within ~12 s, we
+     auto-advance back to the flipbook. */
   function buildGameCelebration(){
     clearStage();
     addImg('blur black.png',    'gs-blur');
@@ -1105,10 +1127,34 @@
     /* Cheerful chime to punctuate the moment. */
     try{ playSuccessChime(); }catch(e){}
 
-    /* Hand control back to the queue (which fades the overlay and
-       triggers onComplete → flipbook turns to page 5). Slightly
-       longer than before so camera + confetti can finish. */
-    setTimeout(close, 5000);
+    /* Play again button pops in once the camera pull-back settles. */
+    setTimeout(showPlayAgainButton, 2500);
+
+    /* Auto-advance back to the flipbook if the user doesn't click
+       Play again. Timer is cancelled inside the click handler. */
+    _celebCloseTimer = setTimeout(close, 12000);
+  }
+
+  /* Builds the "Play again" button on the celebration screen. Clicking
+     cancels the auto-close, clears placed shapes, and re-runs only the
+     sorting game (tutorials don't repeat — user already saw them). */
+  function showPlayAgainButton(){
+    if(!stage) return;
+    var btn = document.createElement('button');
+    btn.className = 'gs-play-again-btn';
+    btn.type = 'button';
+    btn.textContent = 'Play again';
+    btn.addEventListener('pointerdown', function onAgain(){
+      btn.removeEventListener('pointerdown', onAgain);
+      btn.style.pointerEvents = 'none';
+      if(_celebCloseTimer){ clearTimeout(_celebCloseTimer); _celebCloseTimer = null; }
+      btn.style.opacity = '0';
+      setTimeout(function(){ if(btn.parentNode) btn.remove(); }, 220);
+      placedShapes = [];
+      queue = ['game'];
+      playNextShape();
+    });
+    stage.appendChild(btn);
   }
 
   /* Spawn ~100 confetti particles inside the stage. Magical palette:

@@ -80,20 +80,23 @@
   left:580px; top:340px;
   width:760px; height:760px;
   pointer-events:none;
+  /* Donut-shaped warmth — soft centre so the hero's surface keeps its
+     natural colors, with the brightest ring sitting just outside the
+     shape's silhouette. Avoids the "yellow wash" bleed onto the model. */
   background: radial-gradient(
     circle at center,
-    rgba(255, 232, 140, .82)  0%,
-    rgba(255, 200,  70, .55) 16%,
-    rgba(255, 170,  45, .28) 36%,
-    rgba(255, 145,  30, .10) 58%,
-    rgba(255, 130,  20,   0) 75%
+    rgba(255, 235, 150, .15)  0%,
+    rgba(255, 210, 100, .42) 22%,
+    rgba(255, 175,  55, .28) 42%,
+    rgba(255, 150,  35, .10) 62%,
+    rgba(255, 130,  20,   0) 80%
   );
   animation: heroSpotlight 3.2s ease-in-out infinite;
   z-index: 1;
 }
 @keyframes heroSpotlight{
-  0%, 100% { transform: scale(1);    opacity: .82; }
-  50%      { transform: scale(1.08); opacity: 1;   }
+  0%, 100% { transform: scale(1);    opacity: .78; }
+  50%      { transform: scale(1.06); opacity: 1;   }
 }
 
 /* Twinkling sparkle layer that orbits the hero shape. Seven 4-point
@@ -175,9 +178,10 @@
    filter = pulsing golden halo. They compose without conflict. */
 .gs-cube-hero{
   position:absolute;
-  animation:
-    cubeFloat 3.4s ease-in-out infinite,
-    cubeGoldenGlow 2.6s ease-in-out infinite;
+  /* Hero relies on .gs-spotlight (donut radial gradient) + sparkles for
+     its magical aura. The cubeGoldenGlow drop-shadow is intentionally
+     OFF here so it doesn't bleed yellow onto the model's surface. */
+  animation: cubeFloat 3.4s ease-in-out infinite;
 }
 @keyframes cubeFloat{
   0%,100%{ transform:translateY(0); }
@@ -869,21 +873,24 @@
   100% { transform:translateY(-110vh) translateX(var(--xshift, 0px)); opacity:0; }
 }
 
-/* Magnetic snap: silhouette brightens + pulses when the dragged piece
-   is near the correct drop zone. The .near class is toggled by JS
-   during pointermove based on cursor-to-target distance. */
+/* Magnetic snap: silhouette glows bright white with a layered blue
+   halo when the dragged piece is near the correct drop zone. The
+   .near class is toggled by JS during pointermove based on
+   cursor-to-target distance. */
 .gs-target-zone.near svg .shape{
-  fill: rgba(60, 140, 230, .30);
-  stroke: rgba(120, 200, 255, 1);
-  stroke-width: 5;
-  stroke-dasharray: 12 6;
+  fill: rgba(140, 215, 255, .28);
+  stroke: rgba(255, 255, 255, 1);
+  stroke-width: 6;
+  stroke-dasharray: 14 7;
   filter:
-    drop-shadow(0 0 14px rgba(120, 200, 255, .85))
-    drop-shadow(0 0 28px rgba(120, 200, 255, .55));
-  animation: targetNearPulse .6s ease-in-out infinite;
+    drop-shadow(0 0  8px rgba(255, 255, 255, 1))
+    drop-shadow(0 0 20px rgba(190, 230, 255, .90))
+    drop-shadow(0 0 40px rgba(140, 210, 255, .60))
+    drop-shadow(0 0 64px rgba(110, 190, 255, .35));
+  animation: targetNearPulse .7s ease-in-out infinite;
 }
 @keyframes targetNearPulse{
-  0%, 100% { stroke-opacity: .80; }
+  0%, 100% { stroke-opacity: .85; }
   50%      { stroke-opacity: 1;   }
 }
 
@@ -900,8 +907,78 @@
     rgba(0,0,0,.55) 100%);
 }
 
-/* Tiny sparkle particles that follow the dragging cursor. Spawned
-   via JS in setupDrag's onMove handler. */
+/* "Play again" button on the celebration screen — large blue-gradient
+   pill that pops in after the camera pulls back. Pure CSS (no asset),
+   same visual language as the LBD "Let's Go" and cover "Start" buttons
+   so the journey feels cohesive end-to-end. */
+.gs-play-again-btn{
+  position:absolute;
+  left:50%;
+  top:50%;
+  /* Initial state set inline by the pop-in keyframe; pulse takes over after. */
+  transform: translate(-50%, -50%) scale(.3);
+  opacity:0;
+  padding: 22px 80px;
+  font-family:'Fredoka One','Nunito',sans-serif;
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 1.5px;
+  color:#ffffff;
+  background: linear-gradient(180deg, #6FD4FF 0%, #2EA9E8 48%, #157AB8 100%);
+  border: 5px solid #ffffff;
+  border-radius: 999px;
+  cursor: pointer;
+  outline: none;
+  z-index: 500;
+  box-shadow:
+    inset 0 9px 16px rgba(255,255,255, .42),
+    inset 0 -9px 18px rgba(0, 70, 130, .55),
+    0 12px 28px rgba(0, 70, 130, .50),
+    0 4px 8px rgba(0,0,0,.25);
+  text-shadow:
+    0 3px 0 rgba(0, 70, 130, .55),
+    0 5px 12px rgba(0,0,0,.25);
+  animation:
+    playAgainPop .65s cubic-bezier(.34, 1.56, .64, 1) forwards,
+    playAgainPulse 1.6s ease-in-out .8s infinite;
+  transition: filter .12s ease, opacity .22s ease;
+}
+.gs-play-again-btn:hover  { filter: brightness(1.08); }
+.gs-play-again-btn:active { transform: translate(-50%, -50%) scale(.95); }
+
+@keyframes playAgainPop{
+  0%   { transform: translate(-50%, -50%) scale(.3);  opacity: 0; }
+  60%  { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+}
+@keyframes playAgainPulse{
+  0%, 100%{
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow:
+      inset 0 9px 16px rgba(255,255,255,.42),
+      inset 0 -9px 18px rgba(0, 70, 130,.55),
+      0 12px 28px rgba(0, 70, 130,.50),
+      0 4px 8px rgba(0,0,0,.25),
+      0 0 0 0 rgba(110, 210, 255, .55);
+  }
+  50%{
+    transform: translate(-50%, -50%) scale(1.05);
+    box-shadow:
+      inset 0 9px 16px rgba(255,255,255,.42),
+      inset 0 -9px 18px rgba(0, 70, 130,.55),
+      0 16px 36px rgba(0, 70, 130,.55),
+      0 4px 8px rgba(0,0,0,.25),
+      0 0 0 20px rgba(110, 210, 255, 0);
+  }
+}
+
+/* Two-layer cursor trail:
+   - .gs-cursor-spark: small bright yellow sparkles (existing magic feel)
+   - .gs-cursor-glow:  wider soft white-blue smoke blobs (matches the
+                       reference's "drop path" look). Combined they
+                       create a glowing arc behind the dragging finger.
+   Both are spawned via JS in setupDrag's onMove handler. */
 .gs-cursor-spark{
   position:absolute;
   width:12px; height:12px;
@@ -919,4 +996,24 @@
   0%   { transform:scale(.35); opacity:0; }
   15%  { transform:scale(1.1); opacity:1; }
   100% { transform:scale(.25); opacity:0; }
+}
+.gs-cursor-glow{
+  position:absolute;
+  width:42px; height:42px;
+  pointer-events:none;
+  border-radius:50%;
+  background:radial-gradient(circle,
+    rgba(255, 255, 255, .85) 0%,
+    rgba(190, 230, 255, .45) 38%,
+    rgba(140, 210, 255, .14) 68%,
+    transparent              88%);
+  filter:blur(2px);
+  opacity:0;
+  animation:cursorGlowFade 950ms ease-out forwards;
+}
+@keyframes cursorGlowFade{
+  0%   { transform:scale(.3);  opacity:0; }
+  18%  { transform:scale(1);   opacity:.85; }
+  65%  { transform:scale(1.1); opacity:.40; }
+  100% { transform:scale(.55); opacity:0; }
 }

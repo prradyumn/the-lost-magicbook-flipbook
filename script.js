@@ -3909,6 +3909,31 @@
             });
           }
 
+          /* Decorative shape parade on the front page only (data-si="0").
+             Echoes the four shapes shown in the preloader so the storybook
+             opens with the same visual language. */
+          if(i === 0){
+            var $decor = $(
+              '<div class="front-page-shapes">' +
+                '<svg class="fp-shape" viewBox="0 0 100 100" aria-hidden="true">' +
+                  '<polygon points="50,12 88,84 12,84"/>' +
+                '</svg>' +
+                '<svg class="fp-shape" viewBox="0 0 100 100" aria-hidden="true">' +
+                  '<circle cx="50" cy="50" r="36"/>' +
+                '</svg>' +
+                '<svg class="fp-shape" viewBox="0 0 100 100" aria-hidden="true">' +
+                  '<ellipse cx="50" cy="20" rx="30" ry="8"/>' +
+                  '<rect x="20" y="20" width="60" height="60"/>' +
+                  '<ellipse cx="50" cy="80" rx="30" ry="8"/>' +
+                '</svg>' +
+                '<svg class="fp-shape" viewBox="0 0 100 100" aria-hidden="true">' +
+                  '<rect x="18" y="18" width="64" height="64" rx="4"/>' +
+                '</svg>' +
+              '</div>'
+            );
+            $p.append($decor);
+          }
+
           $fb.append($p);
         });
 
