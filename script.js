@@ -4754,12 +4754,25 @@
           });
         });
 
-        /* Game assets (PNGs + GLBs + audio) — fetch into HTTP cache. */
+        /* Game assets — preload via the SAME request path the game will
+           use later, so the image cache key matches:
+             - PNGs / images  → `new Image().src` (warms the image cache)
+             - GLBs / audio    → `fetch().blob()` (warms the HTTP cache)
+           Mismatching paths (fetch for images, <img> for display) can
+           cache-miss on some servers and cause the first-display pop-in. */
         uniqueGame.forEach(function(url){
-          fetch(url)
-            .then(function(r){ return r.blob(); })
-            .then(function(){ assetLoaded(); })
-            .catch(function(){ assetLoaded(); });
+          var isImage = /\.(png|jpe?g|webp|gif|svg)(\?|$)/i.test(url);
+          if(isImage){
+            var img = new Image();
+            img.onload  = function(){ assetLoaded(); };
+            img.onerror = function(){ assetLoaded(); };
+            img.src = url;
+          } else {
+            fetch(url)
+              .then(function(r){ return r.blob(); })
+              .then(function(){ assetLoaded(); })
+              .catch(function(){ assetLoaded(); });
+          }
         });
 
         function onAllLoaded(){
