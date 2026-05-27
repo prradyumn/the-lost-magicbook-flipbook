@@ -259,8 +259,8 @@
   z-index:20;
   animation:bubbleIn .35s ease-out both;
 }
-.gs-bubble.left  { left:110.03px;  top:238px; }   /* boy  — bubble flipped */
-.gs-bubble.right { left:1456.35px; top:278px; }   /* girl — bubble as-is  */
+.gs-bubble.left  { left:110.03px;  top: 375px;px; }   /* boy  — bubble flipped */
+.gs-bubble.right { left:1456.35px; top: 465px;px; }   /* girl — bubble as-is  */
 .gs-bubble-bg{
   position:absolute;inset:0;
   width:100%;height:100%;
@@ -470,7 +470,9 @@
    the target shelf. dx/dy are set inline per shape via CSS variables. */
 .gs-hand-nudge{
   position:absolute;
-  width:272.49px;height:272.49px;
+  /* Unified with .gs-game-nudge-hand at 220×220 so the cursor reads at
+     the same scale in both the tutorial drag and the sorting game. */
+  width:220px;height:220px;
   pointer-events:none;
   z-index:9;
   --hand-dx: 580px;
@@ -544,13 +546,17 @@
   animation: gameNudgeHand 2.8s ease-in-out infinite;
   filter: drop-shadow(0 4px 8px rgba(0,0,0,.55));
 }
+/* scaleY(-1) flips the hand vertically so the finger naturally points
+   DOWN at the silhouette — visually reading as "tap here from above"
+   instead of from below. Included in every keyframe so it persists
+   alongside the translate/scale animation. */
 @keyframes gameNudgeHand{
-  0%   { transform: translate(0,0) scale(.9);                       opacity:0; }
-  10%  { transform: translate(0,0) scale(1);                        opacity:1; }
-  60%  { transform: translate(var(--hand-dx), var(--hand-dy)) scale(.85); opacity:1; }
-  75%  { transform: translate(var(--hand-dx), var(--hand-dy)) scale(1);   opacity:1; }
-  90%  { transform: translate(var(--hand-dx), var(--hand-dy)) scale(.7);  opacity:0; }
-  100% { transform: translate(0,0) scale(.9);                       opacity:0; }
+  0%   { transform: translate(0,0) scale(.9)  scaleY(-1);                             opacity:0; }
+  10%  { transform: translate(0,0) scale(1)   scaleY(-1);                             opacity:1; }
+  60%  { transform: translate(var(--hand-dx), var(--hand-dy)) scale(.85) scaleY(-1); opacity:1; }
+  75%  { transform: translate(var(--hand-dx), var(--hand-dy)) scale(1)   scaleY(-1); opacity:1; }
+  90%  { transform: translate(var(--hand-dx), var(--hand-dy)) scale(.7)  scaleY(-1); opacity:0; }
+  100% { transform: translate(0,0) scale(.9)  scaleY(-1);                             opacity:0; }
 }
 
 /* =====================================================================
@@ -865,6 +871,12 @@
   opacity:0;
   animation:moteFloat var(--dur, 14s) linear infinite;
   animation-delay:var(--delay, 0s);
+}
+/* Pause mote animations when the overlay isn't on-screen so hidden
+   DOM doesn't burn CPU/GPU between game sessions. Resumes the moment
+   the overlay fades back in. */
+#gameOverlay:not(.show) .gs-bg-motes .mote{
+  animation-play-state: paused;
 }
 @keyframes moteFloat{
   0%   { transform:translateY(0)      translateX(0);                  opacity:0; }

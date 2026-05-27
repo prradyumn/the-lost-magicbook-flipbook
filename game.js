@@ -304,7 +304,24 @@
   /* ------------------------------------------------------------------ */
   /*  Element helpers                                                    */
   /* ------------------------------------------------------------------ */
-  function clearStage(){ stage.innerHTML = ''; }
+  /* Pending stage-scoped setTimeout IDs. Cancelled by clearStage so
+     stale callbacks can't mutate removed nodes or fire phantom
+     transitions after the screen has been torn down. */
+  var _stageTimers = [];
+  function stageTimeout(fn, ms){
+    var id = setTimeout(function(){
+      var idx = _stageTimers.indexOf(id);
+      if(idx >= 0) _stageTimers.splice(idx, 1);
+      fn();
+    }, ms);
+    _stageTimers.push(id);
+    return id;
+  }
+  function clearStage(){
+    for(var i = 0; i < _stageTimers.length; i++) clearTimeout(_stageTimers[i]);
+    _stageTimers = [];
+    stage.innerHTML = '';
+  }
 
   function addImg(file, cls){
     var el = document.createElement('img');
@@ -651,7 +668,7 @@
     placed.appendChild(makeShapeStatic());
 
     /* Auto-advance: next shape, or fade out and call onComplete */
-    setTimeout(close, 2200);
+    stageTimeout(close, 2200);
   }
 
   /* ------------------------------------------------------------------ */
@@ -711,6 +728,9 @@
       if(!dragging) return;
       dragging = false;
       piece.classList.remove('dragging');
+      /* Clear the magnetic-snap class so it doesn't survive into a
+         subsequent tutorial if the silhouette element gets re-used. */
+      if(target) target.classList.remove('near');
       window.removeEventListener('pointermove',   onMove);
       window.removeEventListener('pointerup',     onUp);
       window.removeEventListener('pointercancel', onUp);
@@ -742,7 +762,7 @@
           png: currentShape.png,
           placed: { x:p.x, y:p.y, w:p.w, h:p.h }
         });
-        setTimeout(nextScreen, 480);
+        stageTimeout(nextScreen, 480);
       } else {
         wrongAttempts++;
         sfxWrong();
@@ -752,7 +772,7 @@
           'top .45s cubic-bezier(.34,1.56,.64,1)';
         piece.style.left = currentShape.drag.x + 'px';
         piece.style.top  = currentShape.drag.y + 'px';
-        setTimeout(function(){
+        stageTimeout(function(){
           piece.style.transition = '';
           piece.classList.remove('bounce-wrong');
           if(nudge) nudge.style.display = '';
@@ -932,12 +952,15 @@
     arrow.style.transformOrigin = '0 50%';
     arrow.style.transform = 'rotate(' + angleDeg + 'deg)';
 
-    /* Hand glides from spawn toward target */
+    /* Hand glides from spawn toward target. End dy is shifted UP by
+       150 px so the hand finishes ABOVE the silhouette (paired with
+       the scaleY(-1) flip in CSS, the finger naturally points down
+       at the silhouette from above). */
     var hand = addImg('Swipe Up And Click 7.png', 'gs-game-nudge-hand');
     hand.style.left = (startCx - 110) + 'px';
     hand.style.top  = (startCy - 110) + 'px';
     hand.style.setProperty('--hand-dx', dx + 'px');
-    hand.style.setProperty('--hand-dy', dy + 'px');
+    hand.style.setProperty('--hand-dy', (dy - 150) + 'px');
   }
   function hideGameNudge(){
     if(!stage) return;
@@ -972,7 +995,7 @@
     if(!t) return;
     var flash = addDiv('gs-game-row-flash');
     applyRect(flash, t);
-    setTimeout(function(){ if(flash.parentNode) flash.remove(); }, 600);
+    stageTimeout(function(){ if(flash.parentNode) flash.remove(); }, 600);
   }
 
   /* Drag handler dedicated to the sorting game. Reuses the same pointer
@@ -1053,7 +1076,7 @@
           placed: { x:p.x, y:p.y, w:p.w, h:p.h }
         });
         updateGameBanner('That is correct!');
-        setTimeout(function(){
+        stageTimeout(function(){
           gameRound++;
           buildGameRound(gameRound);
         }, 1200);
@@ -1069,14 +1092,14 @@
           'top .45s cubic-bezier(.34,1.56,.64,1)';
         piece.style.left = startX + 'px';
         piece.style.top  = startY + 'px';
-        setTimeout(function(){
+        stageTimeout(function(){
           piece.style.transition = '';
           piece.classList.remove('bounce-wrong');
         }, 500);
 
         if(gameWrongCount >= 2){
           updateGameBanner('Oops! Try again.');
-          setTimeout(function(){
+          stageTimeout(function(){
             updateGameBanner('Drag this toy to the correct shelf.');
           }, 2200);
         }
@@ -1116,7 +1139,7 @@
        is removed when the animation ends so the base responsive
        transform takes over (and window-resizes keep working). */
     stage.classList.add('celebration-camera');
-    setTimeout(function(){
+    stageTimeout(function(){
       stage.classList.remove('celebration-camera');
     }, 2450);
 
@@ -1128,11 +1151,15 @@
     try{ playSuccessChime(); }catch(e){}
 
     /* Play again button pops in once the camera pull-back settles. */
-    setTimeout(showPlayAgainButton, 2500);
+    stageTimeout(showPlayAgainButton, 2500);
 
     /* Auto-advance back to the flipbook if the user doesn't click
-       Play again. Timer is cancelled inside the click handler. */
-    _celebCloseTimer = setTimeout(close, 12000);
+       Play again. The callback nulls _celebCloseTimer itself so a late
+       Play Again tap can detect "timer already fired" and bail. */
+    _celebCloseTimer = setTimeout(function(){
+      _celebCloseTimer = null;
+      close();
+    }, 12000);
   }
 
   /* Builds the "Play again" button on the celebration screen. Clicking
@@ -1146,8 +1173,13 @@
     btn.textContent = 'Play again';
     btn.addEventListener('pointerdown', function onAgain(){
       btn.removeEventListener('pointerdown', onAgain);
+      /* Race guard: if the auto-close timer already fired (it nulls
+         itself in its callback), close() is in flight and we should
+         NOT restart the game — otherwise we'd stomp a fading overlay. */
+      if(!_celebCloseTimer) return;
+      clearTimeout(_celebCloseTimer);
+      _celebCloseTimer = null;
       btn.style.pointerEvents = 'none';
-      if(_celebCloseTimer){ clearTimeout(_celebCloseTimer); _celebCloseTimer = null; }
       btn.style.opacity = '0';
       setTimeout(function(){ if(btn.parentNode) btn.remove(); }, 220);
       placedShapes = [];
