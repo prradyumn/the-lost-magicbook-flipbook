@@ -891,11 +891,14 @@
     /* All previously-placed toys (tutorial + earlier rounds) */
     renderPersistentPlacements();
 
-    /* Top banner — Aanya speaks */
+    /* Top banner — Aanya speaks. Round counter appended so the user
+       sees clear forward progress through the 8 sorting rounds
+       (without it the screen looks identical round-to-round). */
     addImg('Question template.png', 'gs-banner');
     var bt = addDiv('gs-banner-text');
     bt.id = 'gs-game-banner-text';
-    bt.textContent = 'Drag this toy to the correct shelf.';
+    bt.textContent = 'Drag this toy to the correct shelf.  (' +
+                     (idx + 1) + ' / ' + list.length + ')';
 
     /* Spawn box at the fixed Figma position (118.81, 422) × 397×397.
        Uses the Group 23.png artwork (same panel as the tutorial drag
@@ -1155,9 +1158,16 @@
 
     /* Auto-advance back to the flipbook if the user doesn't click
        Play again. The callback nulls _celebCloseTimer itself so a late
-       Play Again tap can detect "timer already fired" and bail. */
+       Play Again tap can detect "timer already fired" and bail. We
+       also tear down the Play Again button here, so the fade-out
+       window can't expose a stale click target that would re-launch
+       a round we're already closing out. */
     _celebCloseTimer = setTimeout(function(){
       _celebCloseTimer = null;
+      if(stage){
+        var pab = stage.querySelector('.gs-play-again-btn');
+        if(pab && pab.parentNode) pab.parentNode.removeChild(pab);
+      }
       close();
     }, 12000);
   }
