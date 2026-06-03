@@ -96,6 +96,16 @@
       <div class="game-stage" id="gameStage"></div>
     </div>
 
+    <!-- ===== DEV ONLY =================================================
+         Quick jump to the sorting game, bypassing the flipbook + tutorials.
+         REMOVE THIS BUTTON, ITS CSS BLOCK (#devJumpToGame in style.css),
+         AND THE CLICK HANDLER (script.js, search "devJumpToGame")
+         BEFORE PRODUCTION.
+         ============================================================== -->
+    <button id="devJumpToGame" type="button" title="Dev: skip to sorting game">
+      &#9654; Game
+    </button>
+
 
     <script src="./script.js"></script>
     <script src="./game.js"></script>

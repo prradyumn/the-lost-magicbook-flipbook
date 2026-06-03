@@ -234,44 +234,34 @@
         }
       }
 
-      /* Decorative shape parade pinned to the front page (data-si="0").
-         Mirrors the loader's 4-shape strip so the book opens with the
-         same visual language users saw during preload. */
-      .front-page-shapes{
-        position:absolute;
-        bottom:14px;
-        left:0;
-        right:0;
-        display:flex;
-        justify-content:center;
-        gap:20px;
-        pointer-events:none;
-        z-index:5;
+      /* ===== DEV ONLY =================================================
+         Quick-jump-to-game button. REMOVE this whole block + the HTML
+         button (#devJumpToGame in index.html) + the click handler
+         (script.js, search "devJumpToGame") before production.
+         ============================================================== */
+      #devJumpToGame{
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        z-index: 1000000;
+        padding: 8px 18px;
+        background: rgba(20, 22, 38, .88);
+        border: 1px solid rgba(120, 200, 255, .45);
+        border-radius: 6px;
+        color: #fff;
+        font-family: -apple-system, system-ui, 'Segoe UI', sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(0,0,0,.4);
+        transition: background .15s, border-color .15s;
       }
-      .fp-shape{
-        width:30px;
-        height:30px;
-        opacity:.95;
-        filter:
-          drop-shadow(0 0 5px rgba(255,217,61,.85))
-          drop-shadow(0 2px 4px rgba(0,0,0,.35));
-        animation: fpHop 1.8s ease-in-out infinite;
-        will-change: transform;
+      #devJumpToGame:hover{
+        background: rgba(60, 110, 170, .95);
+        border-color: rgba(140, 220, 255, .7);
       }
-      .fp-shape:nth-child(1){ animation-delay: 0s;   }
-      .fp-shape:nth-child(2){ animation-delay: .18s; }
-      .fp-shape:nth-child(3){ animation-delay: .36s; }
-      .fp-shape:nth-child(4){ animation-delay: .54s; }
-      .fp-shape polygon,
-      .fp-shape circle,
-      .fp-shape rect,
-      .fp-shape ellipse{
-        fill: #FFD93D;
-      }
-      @keyframes fpHop{
-        0%, 100% { transform: translateY(0)    scale(1);    }
-        50%      { transform: translateY(-8px) scale(1.08); }
-      }
+      #devJumpToGame:active{ transform: translateY(1px); }
       /* Responsive book scaling handled by JS via --book-scale */
 
       *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}

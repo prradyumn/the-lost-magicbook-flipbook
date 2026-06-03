@@ -3909,31 +3909,6 @@
             });
           }
 
-          /* Decorative shape parade on the front page only (data-si="0").
-             Echoes the four shapes shown in the preloader so the storybook
-             opens with the same visual language. */
-          if(i === 0){
-            var $decor = $(
-              '<div class="front-page-shapes">' +
-                '<svg class="fp-shape" viewBox="0 0 100 100" aria-hidden="true">' +
-                  '<polygon points="50,12 88,84 12,84"/>' +
-                '</svg>' +
-                '<svg class="fp-shape" viewBox="0 0 100 100" aria-hidden="true">' +
-                  '<circle cx="50" cy="50" r="36"/>' +
-                '</svg>' +
-                '<svg class="fp-shape" viewBox="0 0 100 100" aria-hidden="true">' +
-                  '<ellipse cx="50" cy="20" rx="30" ry="8"/>' +
-                  '<rect x="20" y="20" width="60" height="60"/>' +
-                  '<ellipse cx="50" cy="80" rx="30" ry="8"/>' +
-                '</svg>' +
-                '<svg class="fp-shape" viewBox="0 0 100 100" aria-hidden="true">' +
-                  '<rect x="18" y="18" width="64" height="64" rx="4"/>' +
-                '</svg>' +
-              '</div>'
-            );
-            $p.append($decor);
-          }
-
           $fb.append($p);
         });
 
@@ -4687,10 +4662,10 @@
         './cap.png',
         /* 3D models — fetch fills the browser cache, so when
            model-viewer instantiates later, the GLB loads instantly. */
-        './assets%20game/ToyBlock_ABC.glb',
+        './assets%20game/toy_block.glb',
         './assets%20game/PartyHat.glb',
         './assets%20game/SoccerBall.glb',
-        './assets%20game/ToyDrum.glb',
+        './assets%20game/drum.glb',
         /* Audio used during tutorials + game */
         './audio/u_vfd6lcdzng-ting-sound-197759.mp3',
         './assets%20game/sucess%20chime.mp3'
@@ -4865,5 +4840,43 @@
         if(e.key === ' ')          replayPage();
       });
 
+      /* ===== DEV ONLY =================================================
+         Quick-jump-to-game button click handler. REMOVE this block +
+         the button (index.html: #devJumpToGame) + its CSS (style.css:
+         #devJumpToGame) before production. */
+      function setupDevJumpToGame(){
+        var btn = document.getElementById('devJumpToGame');
+        if(!btn) return;
+        btn.addEventListener('click', function(){
+          /* Unlock mobile audio on this gesture before any sounds play. */
+          try{ if(typeof window.unlockGameAudio === 'function') window.unlockGameAudio(); }catch(e){}
+          /* Hide flipbook UI so it doesn't peek through during the game. */
+          var bookScene = document.querySelector('.book-scene');
+          if(bookScene) bookScene.style.display = 'none';
+          var pgCnt = document.getElementById('pgCnt');
+          if(pgCnt) pgCnt.style.display = 'none';
+          var pl = document.getElementById('preloader');
+          if(pl){ pl.style.display = 'none'; }
+          /* Hide self after launch. */
+          btn.style.display = 'none';
+          /* Wait for game.js to expose startShapeGames, then run sorting only. */
+          (function tryLaunch(){
+            if(typeof window.startShapeGames === 'function'){
+              /* Full sequence from tutorials → sorting game → celebration. */
+              window.startShapeGames(
+                ['cube','cone','sphere','cylinder','game'],
+                function(){ console.log('[dev] full game finished'); }
+              );
+            } else {
+              setTimeout(tryLaunch, 50);
+            }
+          })();
+        });
+      }
+      /* ============================================================== */
+
       initMusic();
-      $(document).ready(function(){ preloadAssets(loadApp); });
+      $(document).ready(function(){
+        setupDevJumpToGame();
+        preloadAssets(loadApp);
+      });

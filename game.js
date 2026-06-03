@@ -35,11 +35,13 @@
   /* ------------------------------------------------------------------ */
   var SHAPES = {
     cube: {
-      glb:       'ToyBlock_ABC.glb',
+      glb:       'toy_block.glb',
       png:       'block (1).png',
       titlePng:  'Group 422.png',         /* "Cube" yellow title */
       titleText: 'Cube',
-      hero:   { x:708.35, y:532.21, w:503.30, h:503.30 },
+      /* hero shifted up + shrunk to sit in the new vertical centre band
+         (title y:110-310 / hint y:980+) — was y:532, h:503. */
+      hero:   { x:720,    y:380,    w:480,    h:480 },
       drag:   { x:178.47, y:492.99, w:278.65, h:278.65 },
       /* Figma slide-100 cupboard@322 → block at (714, 852, 200x200);
          we run with cupboard@582, so shift x by +260. */
@@ -57,7 +59,9 @@
       png:       './cap.png',             /* party-hat PNG in project root  */
       titlePng:  '421.png',               /* "Cone" yellow title            */
       titleText: 'Cone',
-      hero:   { x:787.72, y:444.17, w:391.16, h:586.74 },
+      /* Cone is taller — lift more aggressively so the tip doesn't
+         crowd the title; preserves the natural 1:1.5 cone aspect. */
+      hero:   { x:795,    y:300,    w:370,    h:560 },
       drag:   { x:201.90, y:445.32, w:227.82, h:341.73 },
       /* Figma slide-100 cap (party hat) at (749, 266, 133x200); +260 shift. */
       placed: { x:1009,   y:266,    w:133,    h:200 },
@@ -74,8 +78,10 @@
       png:       'image (18).png',
       titlePng:  '423.png',               /* "Sphere" yellow title */
       titleText: 'Sphere',
-      /* Sphere is symmetric — square bounds for all three slots. */
-      hero:   { x:790.00, y:490.00, w:390.00, h:390.00 },
+      /* Sphere is symmetric — square bounds for all three slots.
+         Lifted into the centre band; size held to 390 so it reads
+         comparably to the cube and cylinder. */
+      hero:   { x:790,    y:420,    w:390,    h:390 },
       drag:   { x:190.00, y:490.00, w:260.00, h:260.00 },
       /* Figma slide-100 football at (726, 466, 180x180); +260 shift. */
       placed: { x:986,    y:466,    w:180,    h:180 },
@@ -89,12 +95,13 @@
       ]
     },
     cylinder: {
-      glb:       'ToyDrum.glb',
+      glb:       'drum.glb',
       png:       'ChatGPT Image Dec 29, 2025, 01_55_04 PM 1.png',
       titlePng:  '420.png',               /* "Cylinder" yellow title */
       titleText: 'Cylinder',
-      /* Drum is roughly square — same bounds for all three slots. */
-      hero:   { x:770.00, y:480.00, w:400.00, h:400.00 },
+      /* Drum is roughly square — same bounds for all three slots.
+         Lifted to share the new centre band with the other shapes. */
+      hero:   { x:770,    y:410,    w:400,    h:400 },
       drag:   { x:180.00, y:490.00, w:260.00, h:260.00 },
       /* Figma slide-100 drum at (719, 664, 192x192); +260 shift. */
       placed: { x:979,    y:664,    w:192,    h:192 },
@@ -420,10 +427,17 @@
           '<polygon class="shape" points="50,14 86,86 14,86"/>' +
           tail;
       case 'cylinder':
-        /* Drum/cylinder silhouette: curved top + bottom edges so the
-           outline reads as a 3D cylinder without poking past the rect. */
+        /* Pedagogical cylinder silhouette: a clear ellipse rim on top
+           (the circular face seen at angle) + two straight vertical
+           sides + a curved bottom edge. Reads as "cylinder" the same
+           way classroom geometry diagrams do — much more recognisable
+           than the previous barrel/leaf shape. */
         return head +
-          '<path class="shape" d="M 14 26 Q 50 14 86 26 L 86 74 Q 50 86 14 74 Z"/>' +
+          /* Body: straight sides with a curved bottom (closed back to start). */
+          '<path class="shape" d="M 14 22 L 14 78 Q 50 92 86 78 L 86 22 Z"/>' +
+          /* Top rim ellipse — overlapped on the body top so the dashed
+             outlines combine into a recognizable 3D cylinder. */
+          '<ellipse class="shape" cx="50" cy="22" rx="36" ry="10"/>' +
           tail;
       default:
         return head +
@@ -546,19 +560,10 @@
     clearStage();
 
     addImg('blur black.png', 'gs-blur');
-    /* Spotlight halo — CSS radial gradient that breathes (no PNG).
-       Tighter and lighter than the old glow.png so the room art behind
-       it still shows through. */
-    addDiv('gs-spotlight');
-    /* Twinkling sparkle layer that orbits the hero shape — 7 stars
-       on staggered delays for an async shimmer. */
-    var sparkles = addDiv('gs-sparkles');
-    var sparkClasses = ['s1','s2','s3','s4 small','s5','s6 small','s7'];
-    for(var si = 0; si < sparkClasses.length; si++){
-      var spark = document.createElement('div');
-      spark.className = 'spark ' + sparkClasses[si];
-      sparkles.appendChild(spark);
-    }
+    /* Glow + sparkles removed for now — the dusty gold aura around
+       the rotating 3D model was reading odd against the new brighter
+       assets. Re-enable by restoring the gs-spotlight + gs-sparkles
+       blocks here if a softer ambient is desired again. */
     addImg('ChatGPT Image Dec 26, 2025, 01_22_06 PM 1.png', 'gs-boy');
     addImg('ChatGPT Image Dec 26, 2025, 01_22_06 PM 2.png', 'gs-girl');
 
