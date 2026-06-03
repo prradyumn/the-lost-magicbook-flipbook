@@ -834,9 +834,13 @@
     { png:'jar.png',          shape:'cylinder',
       drag:   { w:300, h:300 },
       placed: { x:1301, y:672, w:158, h:158 } },
-    { png:'bucket.png',       shape:'cylinder',
+    { png:'cylinder.png',     shape:'cylinder',
       drag:   { w:300, h:300 },
-      placed: { x:1583, y:664, w:174, h:174 } },
+      /* Cylinder PNG renders smaller than its box (padding), so bumped
+         from 174 → 260. Centred on the bucket's old centre (x:1670)
+         and y shifted up so the bottom still lands on the shelf line
+         (~y:856) next to the drum and jar. */
+      placed: { x:1540, y:596, w:260, h:260 } },
     /* CUBE shelf — 2 additional items beyond tutorial-placed block. */
     { png:'dice.png',         shape:'cube',
       drag:   { w:340, h:340 },

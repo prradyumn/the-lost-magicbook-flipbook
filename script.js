@@ -4651,7 +4651,7 @@
         './assets%20game/basketball.png',
         './assets%20game/block%20(1).png',
         './assets%20game/blur%20black.png',
-        './assets%20game/bucket.png',
+        './assets%20game/cylinder.png',
         './assets%20game/cone.png',
         './assets%20game/dice.png',
         './assets%20game/image%20(18).png',
