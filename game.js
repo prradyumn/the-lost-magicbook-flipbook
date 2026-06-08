@@ -42,7 +42,7 @@
       /* hero shifted up + shrunk to sit in the new vertical centre band
          (title y:110-310 / hint y:980+) — was y:532, h:503. */
       hero:   { x:720,    y:380,    w:480,    h:480 },
-      drag:   { x:178.47, y:492.99, w:278.65, h:278.65 },
+      drag:   { x:177,    y:484,    w:278.65, h:278.65 },
       /* Figma slide-100 cupboard@322 → block at (714, 852, 200x200);
          we run with cupboard@582, so shift x by +260. */
       placed: { x:974,    y:852,    w:200,    h:200 },
@@ -836,11 +836,9 @@
       placed: { x:1301, y:672, w:158, h:158 } },
     { png:'cylinder.png',     shape:'cylinder',
       drag:   { w:300, h:300 },
-      /* Cylinder PNG renders smaller than its box (padding), so bumped
-         from 174 → 260. Centred on the bucket's old centre (x:1670)
-         and y shifted up so the bottom still lands on the shelf line
-         (~y:856) next to the drum and jar. */
-      placed: { x:1540, y:596, w:260, h:260 } },
+      /* Cropped asset now scales like the other shelf toys. Centered at
+         x:1670 and seated on the cylinder shelf beside the drum and jar. */
+      placed: { x:1570, y:633, w:200, h:200 } },
     /* CUBE shelf — 2 additional items beyond tutorial-placed block. */
     { png:'dice.png',         shape:'cube',
       drag:   { w:340, h:340 },
@@ -1346,4 +1344,46 @@
        startCubeGame(onDone)                        — backward compat */
   window.startShapeGames = openShapes;
   window.startCubeGame   = function(cb){ openShapes(['cube'], cb); };
+
+  /* DEV ONLY — internal navigation API exposed when ?align=1 is set in
+     the URL. Used by align-tool.js to step through screens (including
+     sort-game rounds, which have no .gs-clickcatcher overlay). Remove
+     this whole block with align-tool.js before production. */
+  try{
+    if(new URLSearchParams(location.search).get('align') === '1'){
+      window.GameAlign = {
+        /* Tutorial dialogue / drag / success advance (same as the
+           click-catcher would do on a tap). */
+        nextScreen:        function(){ nextScreen(); },
+        showScreen:        function(i){ showScreen(i); },
+        currentScreen:     function(){ return currentScreen; },
+        currentShape:      function(){ return currentShape; },
+        currentShapeKey:   function(){ return currentShape && currentShape._key; },
+        /* Direct builders — bypass game logic, render any screen. */
+        buildDialogue:     function(i){ buildDialogue(i); },
+        buildDragScreen:   buildDragScreen,
+        buildSuccessScreen:buildSuccessScreen,
+        /* Sort-game round navigation. */
+        currentRound:      function(){ return gameRound; },
+        nextRound:         function(){
+          var list = gameToyOrder || TOYS;
+          gameRound++;
+          if(gameRound >= list.length) buildGameCelebration();
+          else                         buildGameRound(gameRound);
+        },
+        prevRound:         function(){
+          if(gameRound > 0) gameRound--;
+          buildGameRound(gameRound);
+        },
+        gotoRound:         function(i){
+          gameRound = i;
+          if(!gameToyOrder) gameToyOrder = shuffleArray(TOYS.slice());
+          buildGameRound(i);
+        },
+        buildGameRound:    buildGameRound,
+        buildGameCelebration: buildGameCelebration,
+        close:             close
+      };
+    }
+  }catch(e){}
 })();

@@ -276,8 +276,8 @@
 }
 /* Bubbles nudged inward (boy +40, girl -40) so the COVER scaling on
    tall/portrait screens doesn't crop their tails or rounded corners. */
-.gs-bubble.left  { left:150px;     top:375px; }   /* boy  — bubble flipped */
-.gs-bubble.right { left:1416.35px; top:465px; }   /* girl — bubble as-is  */
+.gs-bubble.left  { left:91px;      top:254px; }   /* boy  — bubble flipped */
+.gs-bubble.right { left:1465px;    top:329px; }   /* girl — bubble as-is  */
 .gs-bubble-bg{
   position:absolute;inset:0;
   width:100%;height:100%;
