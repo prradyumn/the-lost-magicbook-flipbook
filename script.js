@@ -3662,11 +3662,11 @@
       }
 
       function makeSceneFileName(index){
-        return "scene-" + String(index).padStart(2, "0") + ".png";
+        return "scene-" + String(index).padStart(2, "0") + ".webp";
       }
 
       function makeStoryVideoPath(index){
-        return folder + "page%20" + index + ".mp4";
+        return folder + "assets/videos/page-" + String(index).padStart(2, "0") + ".mp4";
       }
 
       function applyImageLoadLogger(imgEl, originalPath){
@@ -3692,7 +3692,7 @@
       }
 
       var STORY = {
-        bgMusic: "bg%20music.mp3",
+        bgMusic: "assets/audio/bg-music.ogg",
         title: "My Storybook",
         pages: buildStoryPages()
       };
@@ -4111,7 +4111,7 @@
          actually audible over the background music. */
       var PAGE_TURN_GAIN = 3.5; /* loudness multiplier â€” raise/lower to taste */
       (function preloadPageTurnSounds(){
-        var PAGE_TURN_MP3 = 'page.mp3';
+        var PAGE_TURN_MP3 = 'assets/audio/page-turn.ogg';
 
         /* HTMLAudio fallback */
         ['forward','back'].forEach(function(name){
@@ -4241,7 +4241,7 @@
         $('.balloon-container').remove();
         /* Play confetti pop sound */
         try{
-          var pop = new Audio('confetti-pop.mp3');
+          var pop = new Audio('assets/audio/confetti-pop.ogg');
           pop.volume = 0.9;
           pop.play().catch(function(){});
         }catch(e){}
@@ -4633,42 +4633,46 @@
          each into cache; the actual Image / Audio / model-viewer
          elements later hit cache instantly. */
       var GAME_ASSETS_TO_WARM = [
-        /* PNGs the game / tutorials reference */
-        './assets%20game/420.png',
-        './assets%20game/421.png',
-        './assets%20game/423.png',
-        './assets%20game/ChatGPT%20Image%20Dec%2026,%202025,%2001_22_06%20PM%201.png',
-        './assets%20game/ChatGPT%20Image%20Dec%2026,%202025,%2001_22_06%20PM%202.png',
-        './assets%20game/ChatGPT%20Image%20Dec%2029,%202025,%2001_55_04%20PM%201.png',
-        './assets%20game/full%20cupboard.png',
-        './assets%20game/LBD%20SCREEN.png',
-        './assets%20game/Group%2023.png',
-        './assets%20game/Group%20422.png',
-        './assets%20game/Question%20template.png',
-        './assets%20game/Swipe%20Up%20And%20Click%207.png',
-        './assets%20game/Vector%201.png',
-        './assets%20game/Vector.png',
-        './assets%20game/basketball.png',
-        './assets%20game/block%20(1).png',
-        './assets%20game/blur%20black.png',
-        './assets%20game/cylinder.png',
-        './assets%20game/cone.png',
-        './assets%20game/dice.png',
-        './assets%20game/image%20(18).png',
-        './assets%20game/jar.png',
-        './assets%20game/rubic.png',
-        './assets%20game/tennis%20ball.png',
-        './assets%20game/tree.png',
-        './cap.png',
+        /* WebP images the game / tutorials reference */
+        './assets/images/title-cylinder.webp',
+        './assets/images/title-cone.webp',
+        './assets/images/title-sphere.webp',
+        './assets/images/madhav-dialogue.webp',
+        './assets/images/aanya-dialogue.webp',
+        './assets/images/drum-toy.webp',
+        './assets/images/cupboard-full.webp',
+        './assets/images/lbd-screen.webp',
+        './assets/images/spawn-panel.webp',
+        './assets/images/title-cube.webp',
+        './assets/images/question-template.webp',
+        './assets/images/swipe-hand.webp',
+        './assets/images/nudge-arrow.webp',
+        './assets/images/speech-bubble.webp',
+        './assets/images/basketball.webp',
+        './assets/images/block.webp',
+        './assets/images/blur-black.webp',
+        './assets/images/cylinder.webp',
+        './assets/images/cone.webp',
+        './assets/images/dice.webp',
+        './assets/images/sphere-ball.webp',
+        './assets/images/jar.webp',
+        './assets/images/rubik-cube.webp',
+        './assets/images/tennis-ball.webp',
+        './assets/images/tree.webp',
+        './assets/images/cap.webp',
+        './assets/images/cover.webp',
         /* 3D models — fetch fills the browser cache, so when
            model-viewer instantiates later, the GLB loads instantly. */
-        './assets%20game/toy_block.glb',
-        './assets%20game/PartyHat.glb',
-        './assets%20game/SoccerBall.glb',
-        './assets%20game/drum.glb',
-        /* Audio used during tutorials + game */
-        './audio/u_vfd6lcdzng-ting-sound-197759.mp3',
-        './assets%20game/sucess%20chime.mp3'
+        './assets/models/toy-block.glb',
+        './assets/models/party-hat.glb',
+        './assets/models/soccer-ball.glb',
+        './assets/models/drum.glb',
+        /* Audio used during story, tutorials, and game */
+        './assets/audio/bg-music.ogg',
+        './assets/audio/page-turn.ogg',
+        './assets/audio/confetti-pop.ogg',
+        './assets/audio/tap-ting.ogg',
+        './assets/audio/success-chime.ogg'
       ];
 
       /* Light up the shape-parade icons as the progress bar crosses

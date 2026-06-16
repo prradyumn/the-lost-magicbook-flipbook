@@ -800,7 +800,7 @@
   z-index:99999;
   background:
     #1a0633
-    url('./assets%20game/LBD%20SCREEN.png')
+    url('./assets/images/lbd-screen.webp')
     center center / cover no-repeat;
   display:none;
   opacity:0;

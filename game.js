@@ -7,23 +7,28 @@
 (function(){
   'use strict';
 
-  var ASSETS  = './assets%20game/';
+  var IMAGE_ASSETS = './assets/images/';
+  var MODEL_ASSETS = './assets/models/';
+  var AUDIO_ASSETS = './assets/audio/';
   var STAGE_W = 1920;
   var STAGE_H = 1080;
 
   /* Resolve an asset filename. If the name already begins with ./ ../ or /
      it's treated as a path relative to the HTML page (so files in the
-     project root are reachable). Otherwise it's resolved as a filename in
-     the shared "assets game" folder. */
-  function resolveAsset(name){
+     project root are reachable). Otherwise it's resolved within the
+     organized playbook asset folders. */
+  function resolveFrom(base, name){
     if(!name) return '';
     if(name.charAt(0) === '/' ||
        name.indexOf('./')  === 0 ||
        name.indexOf('../') === 0){
       return name;
     }
-    return ASSETS + encodeURI(name);
+    return base + encodeURI(name);
   }
+  function resolveAsset(name){ return resolveFrom(IMAGE_ASSETS, name); }
+  function resolveModel(name){ return resolveFrom(MODEL_ASSETS, name); }
+  function resolveAudio(name){ return resolveFrom(AUDIO_ASSETS, name); }
 
   /* ------------------------------------------------------------------ */
   /*  Per-shape configuration                                            */
@@ -35,9 +40,9 @@
   /* ------------------------------------------------------------------ */
   var SHAPES = {
     cube: {
-      glb:       'toy_block.glb',
-      png:       'block (1).png',
-      titlePng:  'Group 422.png',         /* "Cube" yellow title */
+      glb:       'toy-block.glb',
+      png:       'block.webp',
+      titlePng:  'title-cube.webp',       /* "Cube" yellow title */
       titleText: 'Cube',
       /* hero shifted up + shrunk to sit in the new vertical centre band
          (title y:110-310 / hint y:980+) — was y:532, h:503. */
@@ -55,9 +60,9 @@
       ]
     },
     cone: {
-      glb:       'PartyHat.glb',
-      png:       './cap.png',             /* party-hat PNG in project root  */
-      titlePng:  '421.png',               /* "Cone" yellow title            */
+      glb:       'party-hat.glb',
+      png:       'cap.webp',
+      titlePng:  'title-cone.webp',       /* "Cone" yellow title            */
       titleText: 'Cone',
       /* Cone is taller — lift more aggressively so the tip doesn't
          crowd the title; preserves the natural 1:1.5 cone aspect. */
@@ -68,15 +73,15 @@
       target: { x:616.04, y:238.35, w:1220.45, h:218.55 },    /* top row    */
       nudge:  { x:180.65, y:570.83, dx: 620, dy: -280 },
       dialogues:[
-        { speaker:'boy',  text:'Look, Aany found this hat!',    showTitle:false },
+        { speaker:'boy',  text:'Look, Aanya! I found this hat!', showTitle:false },
         { speaker:'girl', text:'This shape is called a CONE.',  showTitle:true  },
         { speaker:'girl', text:'Let us place it on the shelf.', showTitle:true  }
       ]
     },
     sphere: {
-      glb:       'SoccerBall.glb',
-      png:       'image (18).png',
-      titlePng:  '423.png',               /* "Sphere" yellow title */
+      glb:       'soccer-ball.glb',
+      png:       'sphere-ball.webp',
+      titlePng:  'title-sphere.webp',     /* "Sphere" yellow title */
       titleText: 'Sphere',
       /* Sphere is symmetric — square bounds for all three slots.
          Lifted into the centre band; size held to 390 so it reads
@@ -96,8 +101,8 @@
     },
     cylinder: {
       glb:       'drum.glb',
-      png:       'ChatGPT Image Dec 29, 2025, 01_55_04 PM 1.png',
-      titlePng:  '420.png',               /* "Cylinder" yellow title */
+      png:       'drum-toy.webp',
+      titlePng:  'title-cylinder.webp',   /* "Cylinder" yellow title */
       titleText: 'Cylinder',
       /* Drum is roughly square — same bounds for all three slots.
          Lifted to share the new centre band with the other shapes. */
@@ -130,7 +135,7 @@
   /* "Ting" sound played whenever the user taps to advance a dialogue
      (or taps the floating shape). One Audio instance is kept around;
      each play clones it so overlapping taps still chime. */
-  var TING_SRC = './audio/u_vfd6lcdzng-ting-sound-197759.mp3';
+  var TING_SRC = resolveAudio('tap-ting.ogg');
   var tingAudio = null;
   function playTing(){
     try{
@@ -147,8 +152,8 @@
   }
 
   /* Big celebratory chime played once when the whole sorting game ends.
-     Uses the custom asset shipped at `assets game/sucess chime.mp3`. */
-  var SUCCESS_SRC = './assets%20game/sucess%20chime.mp3';
+     Uses the custom success chime asset from the organized audio folder. */
+  var SUCCESS_SRC = resolveAudio('success-chime.ogg');
   var successAudio = null;
   function playSuccessChime(){
     try{
@@ -262,10 +267,10 @@
        The browser links the gesture to the URL, so subsequent
        `new Audio(url).play()` calls succeed without re-gesture. */
     var paths = [
-      './audio/u_vfd6lcdzng-ting-sound-197759.mp3',
-      './assets%20game/sucess%20chime.mp3',
-      './page.mp3',
-      './bg%20music.mp3'
+      resolveAudio('tap-ting.ogg'),
+      resolveAudio('success-chime.ogg'),
+      resolveAudio('page-turn.ogg'),
+      resolveAudio('bg-music.ogg')
     ];
     paths.forEach(function(src){
       try{
@@ -295,16 +300,16 @@
     window.addEventListener('orientationchange', updateScale);
   }
 
-  /* Landscape: COVER — stage scales to fill the viewport completely,
-     extreme-aspect edges may be clipped by overlay's overflow:hidden.
-     Portrait: CONTAIN — stage fits with bands rather than clipping half
-     the design. Recomputed on every resize / orientation change. */
+  /* CONTAIN in every orientation — the whole 1920×1080 stage is always
+     scaled to fit *inside* the viewport so nothing is ever cropped, on
+     any screen size or aspect ratio. Any leftover space shows the purple
+     background wash (overlay bg + ::before gradient) as letter/pillar
+     bands, which is intentional. Recomputed on every resize /
+     orientation change. */
   function updateScale(){
     var sx = window.innerWidth  / STAGE_W;
     var sy = window.innerHeight / STAGE_H;
-    var s = (window.innerWidth >= window.innerHeight)
-      ? Math.max(sx, sy)
-      : Math.min(sx, sy);
+    var s = Math.min(sx, sy);
     document.documentElement.style.setProperty('--game-scale', s.toFixed(4));
   }
 
@@ -507,7 +512,7 @@
   /* Floating hero shape — auto-rotating GLB with poster fallback. */
   function makeShapeViewer(){
     var mv = document.createElement('model-viewer');
-    mv.setAttribute('src', resolveAsset(currentShape.glb));
+    mv.setAttribute('src', resolveModel(currentShape.glb));
     mv.setAttribute('alt', 'Toy shape');
     mv.setAttribute('auto-rotate', '');
     mv.setAttribute('rotation-per-second', '55deg');
@@ -559,13 +564,13 @@
     var d = currentShape.dialogues[idx];
     clearStage();
 
-    addImg('blur black.png', 'gs-blur');
+    addImg('blur-black.webp', 'gs-blur');
     /* Glow + sparkles removed for now — the dusty gold aura around
        the rotating 3D model was reading odd against the new brighter
        assets. Re-enable by restoring the gs-spotlight + gs-sparkles
        blocks here if a softer ambient is desired again. */
-    addImg('ChatGPT Image Dec 26, 2025, 01_22_06 PM 1.png', 'gs-boy');
-    addImg('ChatGPT Image Dec 26, 2025, 01_22_06 PM 2.png', 'gs-girl');
+    addImg('madhav-dialogue.webp', 'gs-boy');
+    addImg('aanya-dialogue.webp', 'gs-girl');
 
     /* Hero — auto-rotating 3D GLB */
     var hero = addDiv('gs-cube-hero');
@@ -590,7 +595,7 @@
     var b = addDiv('gs-bubble ' + (d.speaker === 'boy' ? 'left' : 'right'));
     var bBg = document.createElement('img');
     bBg.className = 'gs-bubble-bg';
-    bBg.src = ASSETS + encodeURI('Vector.png');
+    bBg.src = resolveAsset('speech-bubble.webp');
     bBg.draggable = false;
     bBg.alt = '';
     b.appendChild(bBg);
@@ -616,8 +621,8 @@
     clearStage();
     wrongAttempts = 0;
 
-    addImg('blur black.png',    'gs-blur');
-    addImg('full cupboard.png', 'gs-cupboard');
+    addImg('blur-black.webp',    'gs-blur');
+    addImg('cupboard-full.webp', 'gs-cupboard');
 
     /* Re-render shapes placed in earlier tutorials so the cupboard
        stays populated as the player progresses. */
@@ -631,12 +636,12 @@
     target.innerHTML = targetSilhouetteSvg(currentShape._key);
 
     /* Top banner + text */
-    addImg('Question template.png', 'gs-banner');
+    addImg('question-template.webp', 'gs-banner');
     var bt = addDiv('gs-banner-text');
     bt.textContent = 'Drag this toy to the correct shelf.';
 
     /* Pickup frame around drag-start */
-    addImg('Group 23.png', 'gs-banner-avatar');
+    addImg('spawn-panel.webp', 'gs-banner-avatar');
 
     /* Draggable shape */
     var piece = addDiv('gs-cube-drag');
@@ -644,7 +649,7 @@
     piece.appendChild(makeShapeStatic());
 
     /* Animated hand nudge */
-    var nudge = addImg('Swipe Up And Click 7.png', 'gs-hand-nudge');
+    var nudge = addImg('swipe-hand.webp', 'gs-hand-nudge');
     nudge.style.left = currentShape.nudge.x + 'px';
     nudge.style.top  = currentShape.nudge.y + 'px';
     nudge.style.setProperty('--hand-dx', currentShape.nudge.dx + 'px');
@@ -657,14 +662,14 @@
   function buildSuccessScreen(){
     clearStage();
 
-    addImg('blur black.png',    'gs-blur');
-    addImg('full cupboard.png', 'gs-cupboard');
+    addImg('blur-black.webp',    'gs-blur');
+    addImg('cupboard-full.webp', 'gs-cupboard');
 
     /* Render shapes placed in earlier tutorials, then the just-placed
        one on top with its pop-in animation. */
     renderPersistentPlacements();
 
-    addImg('Question template.png', 'gs-banner');
+    addImg('question-template.webp', 'gs-banner');
     var bt = addDiv('gs-banner-text');
     bt.textContent = 'Well done!';
 
@@ -813,34 +818,34 @@
      placed form is tiny. */
   var TOYS = [
     /* CONE shelf — 2 additional items beyond tutorial-placed cap. */
-    { png:'tree.png',         shape:'cone',
+    { png:'tree.webp',        shape:'cone',
       drag:   { w:380, h:380 },
       /* Tree PNG is roughly square and fills its box, so object-position
          is a no-op here — the visible position is driven entirely by y
          and h. y:200 lines the visible base up with the shelf; raise to
          lower y to shift the tree UP, or push h smaller to shrink it. */
       placed: { x:1200, y:220, w:320, h:320 } },
-    { png:'cone.png',         shape:'cone',
+    { png:'cone.webp',        shape:'cone',
       drag:   { w:300, h:300 },
       placed: { x:1570, y:266, w:207, h:207 } },
     /* SPHERE shelf — 2 additional items beyond tutorial-placed football. */
-    { png:'basketball.png',   shape:'sphere',
+    { png:'basketball.webp',  shape:'sphere',
       drag:   { w:300, h:300 },
       placed: { x:1293, y:474, w:176, h:176 } },
-    { png:'tennis ball.png',  shape:'sphere',
+    { png:'tennis-ball.webp', shape:'sphere',
       drag:   { w:200, h:200 },
       placed: { x:1626, y:552, w: 88, h: 88 } },
     /* CYLINDER shelf — 2 additional items beyond tutorial-placed drum. */
-    { png:'jar.png',          shape:'cylinder',
+    { png:'jar.webp',         shape:'cylinder',
       drag:   { w:300, h:300 },
       placed: { x:1301, y:672, w:158, h:158 } },
-    { png:'cylinder.png',     shape:'cylinder',
+    { png:'cylinder.webp',    shape:'cylinder',
       drag:   { w:300, h:300 },
       /* Cropped asset now scales like the other shelf toys. Centered at
          x:1670 and seated on the cylinder shelf beside the drum and jar. */
       placed: { x:1570, y:633, w:200, h:200 } },
     /* CUBE shelf — 2 additional items beyond tutorial-placed block. */
-    { png:'dice.png',         shape:'cube',
+    { png:'dice.webp',        shape:'cube',
       drag:   { w:340, h:340 },
       /* Dice PNG has heavy transparent padding but is roughly square,
          so it fills its box and object-position is a no-op. Box shrunk
@@ -849,7 +854,7 @@
          next to the Rubik's cube. Bigger h pushes visible content past
          the cupboard floor; smaller h shrinks the die overall. */
       placed: { x:1210, y:820, w:340, h:340 } },
-    { png:'rubic.png',        shape:'cube',
+    { png:'rubik-cube.webp',  shape:'cube',
       drag:   { w:300, h:300 },
       placed: { x:1598, y:899, w:129, h:129 } }
   ];
@@ -892,8 +897,8 @@
     }
     var toy = list[idx];
 
-    addImg('blur black.png',    'gs-blur');
-    addImg('full cupboard.png', 'gs-cupboard');
+    addImg('blur-black.webp',    'gs-blur');
+    addImg('cupboard-full.webp', 'gs-cupboard');
 
     /* All previously-placed toys (tutorial + earlier rounds) */
     renderPersistentPlacements();
@@ -901,7 +906,7 @@
     /* Top banner — Aanya speaks. Round counter appended so the user
        sees clear forward progress through the 8 sorting rounds
        (without it the screen looks identical round-to-round). */
-    addImg('Question template.png', 'gs-banner');
+    addImg('question-template.webp', 'gs-banner');
     var bt = addDiv('gs-banner-text');
     bt.id = 'gs-game-banner-text';
     bt.textContent = 'Drag this toy to the correct shelf.  (' +
@@ -910,7 +915,7 @@
     /* Spawn box at the fixed Figma position (118.81, 422) × 397×397.
        Uses the Group 23.png artwork (same panel as the tutorial drag
        screen) so the cyan frame style is consistent across both phases. */
-    var box = addImg('Group 23.png', 'gs-spawn-box');
+    var box = addImg('spawn-panel.webp', 'gs-spawn-box');
     box.style.left   = SPAWN_BOX_X + 'px';
     box.style.top    = SPAWN_BOX_Y + 'px';
     box.style.width  = SPAWN_BOX_W + 'px';
@@ -954,7 +959,7 @@
     var angleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
 
     /* Vector 1 dashed arc — stretched along the spawn→target line */
-    var arrow = addImg('Vector 1.png', 'gs-game-nudge-arrow');
+    var arrow = addImg('nudge-arrow.webp', 'gs-game-nudge-arrow');
     arrow.style.left   = startCx + 'px';
     arrow.style.top    = (startCy - 60) + 'px';
     arrow.style.width  = dist + 'px';
@@ -966,7 +971,7 @@
        150 px so the hand finishes ABOVE the silhouette (paired with
        the scaleY(-1) flip in CSS, the finger naturally points down
        at the silhouette from above). */
-    var hand = addImg('Swipe Up And Click 7.png', 'gs-game-nudge-hand');
+    var hand = addImg('swipe-hand.webp', 'gs-game-nudge-hand');
     hand.style.left = (startCx - 110) + 'px';
     hand.style.top  = (startCy - 110) + 'px';
     hand.style.setProperty('--hand-dx', dx + 'px');
@@ -1137,11 +1142,11 @@
      auto-advance back to the flipbook. */
   function buildGameCelebration(){
     clearStage();
-    addImg('blur black.png',    'gs-blur');
-    addImg('full cupboard.png', 'gs-cupboard');
+    addImg('blur-black.webp',    'gs-blur');
+    addImg('cupboard-full.webp', 'gs-cupboard');
     renderPersistentPlacements();
 
-    addImg('Question template.png', 'gs-banner');
+    addImg('question-template.webp', 'gs-banner');
     var bt = addDiv('gs-banner-text');
     bt.textContent = 'Great job! You sorted them all!';
 
