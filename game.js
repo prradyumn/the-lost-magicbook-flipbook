@@ -337,7 +337,7 @@
 
   function addImg(file, cls){
     var el = document.createElement('img');
-    el.src = ASSETS + encodeURI(file);
+    el.src = resolveAsset(file);
     el.className = cls;
     el.draggable = false;
     el.alt = '';
